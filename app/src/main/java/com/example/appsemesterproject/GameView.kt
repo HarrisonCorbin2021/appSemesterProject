@@ -1,9 +1,9 @@
 package com.example.appsemesterproject
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.content.res.Resources
+import android.graphics.*
+import android.util.Log
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -11,26 +11,31 @@ import android.view.SurfaceView
 class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback, Runnable {
 
     private var isRunning = false
-    private val thread = Thread(this)
+    private lateinit var thread: Thread
 
-    private val player = Player(100f, 300f, 0f, 0f)
-    private val paint = Paint()
+    private val player = Player(100f, 300f)
+    private val displayMetrics = Resources.getSystem().displayMetrics
+    private val screenWidth = displayMetrics.widthPixels
+    private val screenHeight = displayMetrics.heightPixels
+    private val background = Background(context, screenWidth, screenHeight)
 
-    // Controller bounds
-    private val leftButtonRect = android.graphics.RectF(50f, 900f, 200f, 1050f)
-    private val rightButtonRect = android.graphics.RectF(250f, 900f, 400f, 1050f)
-    private val jumpButtonRect = android.graphics.RectF(750f, 900f, 900f, 1050f)
-
-    // Player movement state
     private var isMovingLeft = false
     private var isMovingRight = false
+    private var isJumping = false
+
+    // Control button positions
+    private val buttonSize = 200f
+    private val buttonPaint = Paint().apply { color = Color.GRAY }
+    private val leftButton = RectF(50f, screenHeight - buttonSize - 50f, 50f + buttonSize, screenHeight - 50f)
+    private val rightButton = RectF(leftButton.right + 50f, leftButton.top, leftButton.right + 50f + buttonSize, leftButton.bottom)
+    private val jumpButton = RectF(screenWidth - buttonSize - 50f, screenHeight - buttonSize - 50f, screenWidth - 50f, screenHeight - 50f)
 
     init {
         holder.addCallback(this)
-        paint.isAntiAlias = true
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
+        Log.d("GameView", "Surface created")
         startGame()
     }
 
@@ -41,8 +46,11 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     }
 
     private fun startGame() {
-        isRunning = true
-        thread.start()
+        if (!isRunning) {
+            isRunning = true
+            thread = Thread(this)
+            thread.start()
+        }
     }
 
     private fun stopGame() {
@@ -58,29 +66,28 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
         while (isRunning) {
             if (holder.surface.isValid) {
                 val canvas = holder.lockCanvas()
-                update()
-                drawGame(canvas)
-                holder.unlockCanvasAndPost(canvas)
+                try {
+                    update()
+                    drawGame(canvas)
+                } finally {
+                    holder.unlockCanvasAndPost(canvas)
+                }
             }
         }
     }
 
     private fun update() {
-        // Update player movement based on controller state
-        if (isMovingLeft) player.dx = -5f
-        if (isMovingRight) player.dx = 5f
-        if (!isMovingLeft && !isMovingRight) player.dx = 0f
-
-        // Update the player's position
-        player.update()
+        // Update player and background
+        player.update(isMovingLeft, isMovingRight, isJumping)
+        background.update(player.dx)
     }
 
     private fun drawGame(canvas: Canvas) {
-        // Clear the screen
-        canvas.drawColor(Color.BLACK)
+        // Draw the background
+        background.draw(canvas)
 
         // Draw the player
-        paint.color = Color.YELLOW
+        val paint = Paint().apply { color = Color.YELLOW }
         canvas.drawRect(
             player.x,
             player.y,
@@ -89,71 +96,46 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
             paint
         )
 
-        // Draw the controller
-        paint.color = Color.GRAY
-        canvas.drawRect(leftButtonRect, paint)
-        canvas.drawRect(rightButtonRect, paint)
-        canvas.drawRect(jumpButtonRect, paint)
+        // Draw controls
+        canvas.drawRoundRect(leftButton, 20f, 20f, buttonPaint)
+        canvas.drawRoundRect(rightButton, 20f, 20f, buttonPaint)
+        canvas.drawRoundRect(jumpButton, 20f, 20f, buttonPaint)
 
-        // Add labels for buttons
-        paint.color = Color.WHITE
-        paint.textSize = 40f
-        canvas.drawText("←", 100f, 990f, paint)
-        canvas.drawText("→", 300f, 990f, paint)
-        canvas.drawText("JUMP", 770f, 990f, paint)
+        // Add text to buttons for clarity
+        val textPaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 50f
+            textAlign = Paint.Align.CENTER
+        }
+        canvas.drawText("Left", leftButton.centerX(), leftButton.centerY() + 15f, textPaint)
+        canvas.drawText("Right", rightButton.centerX(), rightButton.centerY() + 15f, textPaint)
+        canvas.drawText("Jump", jumpButton.centerX(), jumpButton.centerY() + 15f, textPaint)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                 when {
-                    leftButtonRect.contains(event.x, event.y) -> {
+                    leftButton.contains(event.x, event.y) -> {
                         isMovingLeft = true
                         isMovingRight = false
                     }
-                    rightButtonRect.contains(event.x, event.y) -> {
+                    rightButton.contains(event.x, event.y) -> {
                         isMovingRight = true
                         isMovingLeft = false
                     }
-                    jumpButtonRect.contains(event.x, event.y) -> {
-                        player.jump()
+                    jumpButton.contains(event.x, event.y) -> {
+                        isJumping = true
                     }
                 }
             }
             MotionEvent.ACTION_UP -> {
-                // Stop movement when finger is lifted
+                // Stop movement on button release
                 isMovingLeft = false
                 isMovingRight = false
+                isJumping = false
             }
         }
         return true
-    }
-}
-
-data class Player(
-    var x: Float,
-    var y: Float,
-    var dx: Float,
-    var dy: Float,
-    val gravity: Float = 0.5f,
-    val size: Float = 50f
-) {
-    fun update() {
-        // Apply gravity and update position
-        dy += gravity
-        x += dx
-        y += dy
-
-        // Prevent falling off the screen
-        if (y > 800f) {
-            y = 800f
-            dy = 0f
-        }
-    }
-
-    fun jump() {
-        if (y >= 800f) { // Only jump if on the ground
-            dy = -15f
-        }
     }
 }
