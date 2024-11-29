@@ -1,5 +1,7 @@
 package com.example.appsemesterproject
 
+import android.graphics.RectF
+
 class Player(var x: Float, var y: Float) {
     var dx: Float = 0f
     var dy: Float = 0f
@@ -32,4 +34,11 @@ class Player(var x: Float, var y: Float) {
             isOnGround = true
         }
     }
+
+    fun getBoundingRect(): RectF {
+        return RectF(x, y, x + size, y + size)
+    }
 }
+
+
+

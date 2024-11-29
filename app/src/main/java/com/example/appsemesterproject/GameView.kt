@@ -30,6 +30,10 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     private val rightButton = RectF(leftButton.right + 50f, leftButton.top, leftButton.right + 50f + buttonSize, leftButton.bottom)
     private val jumpButton = RectF(screenWidth - buttonSize - 50f, screenHeight - buttonSize - 50f, screenWidth - 50f, screenHeight - 50f)
 
+    //Overlay of game elements
+    private val gameLayer = GameLayer(context, screenWidth, screenHeight)
+
+
     init {
         holder.addCallback(this)
     }
@@ -77,14 +81,24 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     }
 
     private fun update() {
-        // Update player and background
+        // Update player, background, and game layer
         player.update(isMovingLeft, isMovingRight, isJumping)
         background.update(player.dx)
+        gameLayer.update(player.dx)
+
+        // Check for collisions with platforms
+        if (!gameLayer.checkCollision(player)) {
+            // If no collision, apply gravity
+            player.dy += 0.5f
+        }
     }
 
     private fun drawGame(canvas: Canvas) {
         // Draw the background
         background.draw(canvas)
+
+        // Draw the game elements (platforms and walls)
+        gameLayer.draw(canvas)
 
         // Draw the player
         val paint = Paint().apply { color = Color.YELLOW }
@@ -96,12 +110,12 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
             paint
         )
 
-        // Draw controls
+        // Draw the controls
         canvas.drawRoundRect(leftButton, 20f, 20f, buttonPaint)
         canvas.drawRoundRect(rightButton, 20f, 20f, buttonPaint)
         canvas.drawRoundRect(jumpButton, 20f, 20f, buttonPaint)
 
-        // Add text to buttons for clarity
+        // Add text to buttons
         val textPaint = Paint().apply {
             color = Color.WHITE
             textSize = 50f
