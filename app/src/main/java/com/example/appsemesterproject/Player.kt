@@ -1,44 +1,47 @@
 package com.example.appsemesterproject
 
-import android.graphics.RectF
+import android.graphics.Canvas
+import android.graphics.Rect
+import android.graphics.Color
+import android.graphics.Paint
 
-class Player(var x: Float, var y: Float) {
-    var dx: Float = 0f
-    var dy: Float = 0f
-    val size = 100f
-    private val gravity = 5.0f
-    private val jumpSpeed = -50f
-    private var isOnGround = true
+class Player(
+    private val initialX: Float,
+    private val initialY: Float,
+    private val width: Int,
+    private val height: Int,
+    private val screenHeight: Int
+) {
+    var x: Float = initialX
+    var y: Float = initialY
+    private val speedY: Float = 0f // Vertical speed
 
-    fun update(isMovingLeft: Boolean, isMovingRight: Boolean, isJumping: Boolean) {
-        if (isMovingLeft) dx = -10f
-        if (isMovingRight) dx = 10f
-        if (!isMovingLeft && !isMovingRight) dx = 0f
-
-        if (isJumping && isOnGround) {
-            dy = jumpSpeed
-            isOnGround = false
-        }
-
-        // Apply gravity
-        dy += gravity
-
-        // Update position
-        x += dx
-        y += dy
-
-        // Simulate ground collision
-        if (y >= 1300f) { // The ground level
-            y = 1300f
-            dy = 0f
-            isOnGround = true
-        }
+    // Paint object for drawing
+    private val paint = Paint().apply {
+        color = Color.MAGENTA // Pink color
+        style = Paint.Style.FILL
     }
 
-    fun getBoundingRect(): RectF {
-        return RectF(x, y, x + size, y + size)
+    val hitbox: Rect
+        get() = Rect(x.toInt(), y.toInt(), (x + width).toInt(), (y + height).toInt())
+
+    fun update(deltaTime: Float) {
+        // Update the player's position based on physics
+        y += speedY * deltaTime
+    }
+
+    fun draw(canvas: Canvas) {
+        // Draw the player as a pink square
+        canvas.drawRect(x, y, x + width, y + height, paint)
+    }
+
+    fun onGroundCollision() {
+        // Logic when the player collides with the ground
+        y = (screenHeight - 100 - height).toFloat()
+    }
+
+    fun onPlatformCollision(platform: Rect) {
+        // Logic when the player collides with a platform
+        y = platform.top - height.toFloat()
     }
 }
-
-
-
