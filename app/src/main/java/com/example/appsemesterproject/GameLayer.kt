@@ -15,16 +15,22 @@ class GameLayer(context: Context, private val screenWidth: Int, private val scre
     private val groundHeight = 300f  // Height of the ground image
     private var groundOffset = 0f  // The current offset of the ground for scrolling
 
-    init {
+    // Define a fixed set of platform positions (adjustable as needed)
+    private val platformPositions = listOf(
+        RectF(200f, 500f, 600f, 550f),  // Platform 1
+        RectF(800f, 400f, 1000f, 450f), // Platform 2
+        RectF(1200f, 300f, 1400f, 350f), // Platform 3
+        RectF(1600f, 500f, 1800f, 550f)  // Platform 4
+    )
 
+    init {
         // Resize the ground image to fit the screen width and a fixed height
         groundBitmap = Bitmap.createScaledBitmap(groundBitmap, screenWidth, groundHeight.toInt(), true)
         // Resize the platform image to a fixed width and height
         platformBitmap = Bitmap.createScaledBitmap(platformBitmap, 200, 50, true)
 
-        // Add initial platforms (RectF is still used for platform locations)
-        platforms.add(RectF(200f, 500f, 600f, 550f))  // Example platform
-        platforms.add(RectF(800f, 400f, 1000f, 450f)) // Example platform
+        // Add platforms based on the predefined positions
+        platforms.addAll(platformPositions)
     }
 
     fun update(playerSpeed: Float) {
@@ -33,10 +39,15 @@ class GameLayer(context: Context, private val screenWidth: Int, private val scre
             platform.offset(-playerSpeed, 0f)
         }
 
-        // Remove platforms that move out of the screen and add new ones if necessary
-        if (platforms.isNotEmpty() && platforms.first().right < 0) {
-            platforms.removeAt(0)
-            addPlatform()
+        // Check and reset platforms when they move off the left or right side of the screen
+        for (platform in platforms) {
+            if (platform.right < 0) {
+                // Move platform to the right side of the screen to be revisitable
+                platform.offset(screenWidth + platform.width(), 0f)
+            } else if (platform.left > screenWidth) {
+                // Move platform to the left side of the screen to be revisitable
+                platform.offset(-screenWidth - platform.width(), 0f)
+            }
         }
 
         // Scroll the ground by updating its offset based on the player's movement
@@ -46,15 +57,6 @@ class GameLayer(context: Context, private val screenWidth: Int, private val scre
         if (groundOffset <= -groundBitmap.width.toFloat()) {
             groundOffset = 0f
         }
-    }
-
-    private fun addPlatform() {
-        // Add a new platform at a random position beyond the screen width
-        val width = (200..400).random().toFloat()
-        val height = 50f
-        val left = (screenWidth + 200).toFloat() // Platform is created just off-screen
-        val top = (300..700).random().toFloat()
-        platforms.add(RectF(left, top, left + width, top + height))
     }
 
     fun draw(canvas: Canvas) {
@@ -70,13 +72,9 @@ class GameLayer(context: Context, private val screenWidth: Int, private val scre
             canvas.drawBitmap(groundBitmap, xOffset, screenHeight - groundHeight, null)
         }
 
-        // Draw the platforms as a tiled sequence
+        // Draw the platforms
         for (platform in platforms) {
-            var platformXOffset = platform.left
-            while (platformXOffset < platform.right) {
-                canvas.drawBitmap(platformBitmap, platformXOffset, platform.top, null)
-                platformXOffset += platformBitmap.width.toFloat() // Move to the next platform tile position
-            }
+            canvas.drawBitmap(platformBitmap, platform.left, platform.top, null)
         }
     }
 

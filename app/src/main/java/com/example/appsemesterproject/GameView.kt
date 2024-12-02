@@ -83,6 +83,16 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     private fun update() {
         // Update player, background, and game layer
         player.update(isMovingLeft, isMovingRight, isJumping)
+
+        // Prevent player from moving off the screen horizontally
+        if (player.x < 0) {
+            player.x = 0f // Player can't move beyond the left edge
+        }
+        if (player.x + player.size > screenWidth) {
+            player.x = screenWidth - player.size // Player can't move beyond the right edge
+        }
+
+        // Update background and game layer for scrolling
         background.update(player.dx)
         gameLayer.update(player.dx)
 
@@ -91,9 +101,17 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
             // If no collision, apply gravity
             player.dy += 0.5f
         }
+
+        // Update player position based on vertical velocity
+        player.y += player.dy
     }
 
+
+
     private fun drawGame(canvas: Canvas) {
+        // For some reason the left scrolling breaks unless the background is drawn like this first
+        canvas.drawBitmap(BitmapFactory.decodeResource(context.resources, R.drawable.skybox), 0f, 0f, null)
+
         // Draw the background
         background.draw(canvas)
 
@@ -125,6 +143,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
         canvas.drawText("Right", rightButton.centerX(), rightButton.centerY() + 15f, textPaint)
         canvas.drawText("Jump", jumpButton.centerX(), jumpButton.centerY() + 15f, textPaint)
     }
+
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
