@@ -9,7 +9,7 @@ import android.graphics.RectF
 class GameLayer(context: Context, private val screenWidth: Int, private val screenHeight: Int) {
 
     // Load platform and ground images
-    private var platformBitmap: Bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.platforma)
+    private var platformBitmap: Bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.platformb)
     private var groundBitmap: Bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.platformb)
     private val platforms = mutableListOf<RectF>()
     private val groundHeight = 300f  // Height of the ground image
@@ -17,10 +17,10 @@ class GameLayer(context: Context, private val screenWidth: Int, private val scre
 
     // Define a fixed set of platform positions (adjustable as needed)
     private val platformPositions = listOf(
-        RectF(200f, 500f, 600f, 550f),  // Platform 1
-        RectF(800f, 400f, 1000f, 450f), // Platform 2
-        RectF(1200f, 300f, 1400f, 350f), // Platform 3
-        RectF(1600f, 500f, 1800f, 550f)  // Platform 4
+        RectF(200f, 1100f, 600f, 1150f),  // Platform 1
+        RectF(800f, 1200f, 1000f, 1250f), // Platform 2
+        RectF(1200f, 1300f, 1400f, 1350f), // Platform 3
+        RectF(1600f, 1500f, 1800f, 1550f)  // Platform 4
     )
 
     init {
@@ -81,13 +81,27 @@ class GameLayer(context: Context, private val screenWidth: Int, private val scre
     fun checkCollision(player: Player): Boolean {
         // Check if the player collides with any platform
         for (platform in platforms) {
-            if (RectF.intersects(platform, player.getBoundingRect())) {
-                // Adjust player's position to sit on top of the platform
-                player.y = platform.top - player.size
-                player.dy = 0f
-                return true
+            // Check for horizontal overlap: player must be within the platform’s horizontal bounds
+            val isHorizontallyAligned = player.x + player.size > platform.left && player.x < platform.right
+
+            // Check if the player is falling and within the horizontal bounds of the platform
+            if (isHorizontallyAligned && RectF.intersects(platform, player.getBoundingRect())) {
+                // If the player is falling (dy > 0) and is near the platform (bottom of player is just above platform's top)
+                if (player.dy > 0 && player.getBoundingRect().bottom <= platform.top + 10f) {
+                    if (player.dx > 0 && player.getBoundingRect().right <= platform.left + 10f) {
+                        if (player.dx > 0 && player.getBoundingRect().left <= platform.right + 10f) {
+                            // Adjust player's position to sit on top of the platform
+                            player.y = platform.top - player.size
+                            player.dy =
+                                0f  // Stop downward velocity (player "lands" on the platform)
+                            return true
+                        }
+                    }
+                }
             }
         }
         return false
     }
+
+
 }

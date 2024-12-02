@@ -146,24 +146,16 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
 
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        val x = event.x
+        val y = event.y
+
         when (event.action) {
-            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                when {
-                    leftButton.contains(event.x, event.y) -> {
-                        isMovingLeft = true
-                        isMovingRight = false
-                    }
-                    rightButton.contains(event.x, event.y) -> {
-                        isMovingRight = true
-                        isMovingLeft = false
-                    }
-                    jumpButton.contains(event.x, event.y) -> {
-                        isJumping = true
-                    }
-                }
+            MotionEvent.ACTION_DOWN -> {
+                isMovingLeft = x < leftButton.right && x > leftButton.left && y < leftButton.bottom && y > leftButton.top
+                isMovingRight = x < rightButton.right && x > rightButton.left && y < rightButton.bottom && y > rightButton.top
+                isJumping = x < jumpButton.right && x > jumpButton.left && y < jumpButton.bottom && y > jumpButton.top
             }
             MotionEvent.ACTION_UP -> {
-                // Stop movement on button release
                 isMovingLeft = false
                 isMovingRight = false
                 isJumping = false
