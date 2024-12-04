@@ -1,5 +1,6 @@
 package com.example.appsemesterproject
 
+import android.content.res.Resources
 import android.graphics.RectF
 
 class Player(var x: Float, var y: Float) {
@@ -10,7 +11,9 @@ class Player(var x: Float, var y: Float) {
     private val gravity = 0.5f  // Gravity strength
     private val jumpStrength = 15f  // Jump strength
     private val maxFallSpeed = 10f  // Maximum falling speed
-    private var isInAir = false
+    var isInAir = false
+    private val displayMetrics = Resources.getSystem().displayMetrics
+    private val screenHeight = displayMetrics.heightPixels
 
     // Update player position based on movement and gravity
     fun update(isMovingLeft: Boolean, isMovingRight: Boolean, isJumping: Boolean) {
@@ -38,18 +41,25 @@ class Player(var x: Float, var y: Float) {
         x += dx
         y += dy
 
-        // Prevent player from falling through the ground
-        if (y > 1080 - size) {  // Adjust this number based on your screen height
-            y = 1080 - size
-            dy = 0f
-            isInAir = false
-        }
+        // Debugging: Log player's vertical position and ground height for comparison
 
-        // Prevent player from moving off the screen horizontally
-        if (x < 0) {
-            x = 0f
-        } else if (x + size > 1920) {  // Adjust based on screen width
-            x = 1920 - size
+        // Check for landing (collision with ground)
+        if (y > screenHeight - 300f - size) {
+            y = screenHeight - 300f - size
+            dy = 0f
+            if (isInAir) { // Only update if the player was in the air
+                isInAir = false  // Player is on the ground, can jump again
+            }
+        }
+    }
+
+    fun handlePlatformCollision(platform: RectF) {
+        // If the player is falling and intersects with the platform
+        if (dy > 0 && RectF.intersects(platform, getBoundingRect())) {
+            // Adjust the player to sit on top of the platform
+            y = platform.top - size
+            dy = 0f  // Stop the downward movement
+            isInAir = false  // Player is now on the platform
         }
     }
 

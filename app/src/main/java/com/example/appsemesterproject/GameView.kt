@@ -4,13 +4,14 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.*
 import android.util.Log
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 
 class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback, Runnable {
 
-    private var isRunning = false
+    var isRunning = false
     private lateinit var thread: Thread
 
     private val player = Player(100f, 300f)
@@ -30,12 +31,14 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     private val rightButton = RectF(leftButton.right + 50f, leftButton.top, leftButton.right + 50f + buttonSize, leftButton.bottom)
     private val jumpButton = RectF(screenWidth - buttonSize - 50f, screenHeight - buttonSize - 50f, screenWidth - 50f, screenHeight - 50f)
 
-    //Overlay of game elements
+    // Overlay of game elements
     private val gameLayer = GameLayer(context, screenWidth, screenHeight)
-
 
     init {
         holder.addCallback(this)
+        isFocusable = true
+        isFocusableInTouchMode = true
+        requestFocus()
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
@@ -49,7 +52,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
         stopGame()
     }
 
-    private fun startGame() {
+    fun startGame() {
         if (!isRunning) {
             isRunning = true
             thread = Thread(this)
@@ -57,7 +60,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
         }
     }
 
-    private fun stopGame() {
+    fun stopGame() {
         isRunning = false
         try {
             thread.join()
@@ -86,36 +89,42 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
 
         // Prevent player from moving off the screen horizontally
         if (player.x < 0) {
-            player.x = 0f // Player can't move beyond the left edge
+            player.x = 0f
         }
         if (player.x + player.size > screenWidth) {
-            player.x = screenWidth - player.size // Player can't move beyond the right edge
+            player.x = screenWidth - player.size
         }
 
         // Update background and game layer for scrolling
         background.update(player.dx)
         gameLayer.update(player.dx)
 
-        // Check for collisions with platforms
+        // Check for collisions with platforms and stars
         if (!gameLayer.checkCollision(player)) {
-            // If no collision, apply gravity
+            // Apply gravity if no collision
             player.dy += 0.5f
+            if (player.dy > 10f) {
+                player.dy = 10f // Clamp falling speed
+            }
         }
 
-        // Update player position based on vertical velocity
+        // Update player position
         player.y += player.dy
+
+        // Ensure the player does not fall below the ground
+        if (player.y + player.size > screenHeight - gameLayer.groundHeight) {
+            player.y = screenHeight - gameLayer.groundHeight - player.size
+            player.dy = 0f
+        }
     }
 
-
-
     private fun drawGame(canvas: Canvas) {
-        // For some reason the left scrolling breaks unless the background is drawn like this first
         canvas.drawBitmap(BitmapFactory.decodeResource(context.resources, R.drawable.skybox), 0f, 0f, null)
 
         // Draw the background
         background.draw(canvas)
 
-        // Draw the game elements (platforms and walls)
+        // Draw the game elements (platforms, etc.)
         gameLayer.draw(canvas)
 
         // Draw the player
@@ -128,7 +137,15 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
             paint
         )
 
-        // Draw the controls
+        // Draw the red line at the ground height
+        val groundLinePaint = Paint().apply {
+            color = Color.RED
+            strokeWidth = 5f  // Line thickness
+            style = Paint.Style.STROKE
+        }
+        canvas.drawLine(0f, screenHeight - gameLayer.groundHeight.toFloat(), screenWidth.toFloat(), screenHeight - gameLayer.groundHeight.toFloat(), groundLinePaint)
+
+        // Draw the control buttons
         canvas.drawRoundRect(leftButton, 20f, 20f, buttonPaint)
         canvas.drawRoundRect(rightButton, 20f, 20f, buttonPaint)
         canvas.drawRoundRect(jumpButton, 20f, 20f, buttonPaint)
@@ -144,7 +161,6 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
         canvas.drawText("Jump", jumpButton.centerX(), jumpButton.centerY() + 15f, textPaint)
     }
 
-
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val x = event.x
         val y = event.y
@@ -153,7 +169,9 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
             MotionEvent.ACTION_DOWN -> {
                 isMovingLeft = x < leftButton.right && x > leftButton.left && y < leftButton.bottom && y > leftButton.top
                 isMovingRight = x < rightButton.right && x > rightButton.left && y < rightButton.bottom && y > rightButton.top
-                isJumping = x < jumpButton.right && x > jumpButton.left && y < jumpButton.bottom && y > jumpButton.top
+                if (x < jumpButton.right && x > jumpButton.left && y < jumpButton.bottom && y > jumpButton.top) {
+                    isJumping = !player.isInAir  // Set jumping to true if player is not in air
+                }
             }
             MotionEvent.ACTION_UP -> {
                 isMovingLeft = false
@@ -162,5 +180,42 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
             }
         }
         return true
+    }
+
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        when (keyCode) {
+            KeyEvent.KEYCODE_A -> {
+                isMovingLeft = true
+                return true
+            }
+            KeyEvent.KEYCODE_D -> {
+                isMovingRight = true
+                return true
+            }
+            KeyEvent.KEYCODE_SPACE -> {
+                isJumping = true
+                return true
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+        when (keyCode) {
+            KeyEvent.KEYCODE_A -> {
+                isMovingLeft = false
+                return true
+            }
+            KeyEvent.KEYCODE_D -> {
+                isMovingRight = false
+                return true
+            }
+            KeyEvent.KEYCODE_SPACE -> {
+                isJumping = false
+                return true
+            }
+        }
+        return super.onKeyUp(keyCode, event)
     }
 }
