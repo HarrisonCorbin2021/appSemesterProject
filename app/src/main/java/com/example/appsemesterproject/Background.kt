@@ -6,7 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 
 class Background(context: Context, private val screenWidth: Int, private val screenHeight: Int) {
-    private val bitmap: Bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.skybox)
+    private val bitmap: Bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.sketchvalleybg)
     private var offsetX: Float = 0f
     private val scrollSpeedFactor = 5.0f // Controls the parallax effect speed
 

@@ -8,9 +8,9 @@ class Player(var x: Float, var y: Float) {
     var dx = 0f
     var dy = 0f
     val size = 50f  // Player size (square)
-    private val gravity = 0.5f  // Gravity strength
+    private val gravity = 1.0f  // Gravity strength
     private val jumpStrength = 15f  // Jump strength
-    private val maxFallSpeed = 10f  // Maximum falling speed
+    private val maxFallSpeed = 40f  // Maximum falling speed
     var isInAir = false
     private val displayMetrics = Resources.getSystem().displayMetrics
     private val screenHeight = displayMetrics.heightPixels
@@ -19,9 +19,9 @@ class Player(var x: Float, var y: Float) {
     fun update(isMovingLeft: Boolean, isMovingRight: Boolean, isJumping: Boolean) {
         // Handle horizontal movement
         if (isMovingLeft) {
-            dx = -5f  // Move left
+            dx = -20f  // Move left
         } else if (isMovingRight) {
-            dx = 5f  // Move right
+            dx = 20f  // Move right
         } else {
             dx = 0f  // No horizontal movement
         }

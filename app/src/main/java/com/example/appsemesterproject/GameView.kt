@@ -32,7 +32,8 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     private val jumpButton = RectF(screenWidth - buttonSize - 50f, screenHeight - buttonSize - 50f, screenWidth - 50f, screenHeight - 50f)
 
     // Overlay of game elements
-    private val gameLayer = GameLayer(context, screenWidth, screenHeight)
+    private val gameLayer = GameLayer(screenWidth, screenHeight)
+    
 
     init {
         holder.addCallback(this)
@@ -119,7 +120,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     }
 
     private fun drawGame(canvas: Canvas) {
-        canvas.drawBitmap(BitmapFactory.decodeResource(context.resources, R.drawable.skybox), 0f, 0f, null)
+        canvas.drawBitmap(BitmapFactory.decodeResource(context.resources, R.drawable.sketchvalleybg), 0f, 0f, null)
 
         // Draw the background
         background.draw(canvas)

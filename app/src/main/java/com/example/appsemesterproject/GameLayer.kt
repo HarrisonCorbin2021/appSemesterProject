@@ -1,20 +1,23 @@
 package com.example.appsemesterproject
 
-import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.RectF
 import android.graphics.Paint
 import android.graphics.Color
 import kotlin.math.sqrt
 
-class GameLayer(context: Context, private val screenWidth: Int, private val screenHeight: Int) {
+class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
 
     // Load platform and ground images
-    private var platformBitmap: Bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.platformb)
-    private var groundBitmap: Bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.platformb)
-    private val platforms = mutableListOf<RectF>()
+    private var backgroundBitmap: Bitmap? = null
+    private var platformBitmap: Bitmap? = null
+    private var groundBitmap: Bitmap? = null
+    //private var bossBitmap: Bitmap? = null
+
+    private val platforms = mutableListOf<RectF>() // Rectangles representing platforms
+    //private val ground = Rect(0, screenHeight - 100, screenWidth, screenHeight) // Ground rectangle
+
     val groundHeight = 300f  // Height of the ground image
     private var groundOffset = 0f  // The current offset of the ground for scrolling
 
@@ -23,22 +26,27 @@ class GameLayer(context: Context, private val screenWidth: Int, private val scre
     private val starRadius = 10f // Radius of the stars
     private val starPaint = Paint().apply { color = Color.YELLOW }
 
-    // Define a fixed set of platform positions (adjustable as needed)
-    private val platformPositions = listOf(
-        RectF(200f, 1100f, 600f, 1150f),  // Platform 1
-        RectF(800f, 1200f, 1000f, 1250f), // Platform 2
-        RectF(1200f, 1300f, 1400f, 1350f), // Platform 3
-        RectF(1600f, 1500f, 1800f, 1550f)  // Platform 4
-    )
+    // Setters for game elements
+    fun setBackground(bitmap: Bitmap) {
+        backgroundBitmap = bitmap
+    }
+
+    fun setPlatformImage(bitmap: Bitmap) {
+        platformBitmap = bitmap
+    }
+
+    fun setGroundImage(bitmap: Bitmap) {
+        groundBitmap = bitmap
+    }
 
     init {
         // Resize the ground image to fit the screen width and a fixed height
-        groundBitmap = Bitmap.createScaledBitmap(groundBitmap, screenWidth, groundHeight.toInt(), true)
+        groundBitmap = groundBitmap?.let { Bitmap.createScaledBitmap(it, screenWidth, groundHeight.toInt(), true) }
         // Resize the platform image to a fixed width and height
-        platformBitmap = Bitmap.createScaledBitmap(platformBitmap, 200, 50, true)
+        platformBitmap = platformBitmap?.let { Bitmap.createScaledBitmap(it, 200, 50, true) }
 
         // Add platforms based on the predefined positions
-        platforms.addAll(platformPositions)
+        platforms.addAll(platforms)
 
         // Add stars centered above each platform
         platforms.forEach { platform ->
@@ -75,7 +83,7 @@ class GameLayer(context: Context, private val screenWidth: Int, private val scre
         groundOffset -= playerSpeed
 
         // Reset the ground offset when it goes off the screen on the left side
-        if (groundOffset <= -groundBitmap.width.toFloat()) {
+        if (groundOffset <= -groundBitmap?.width?.toFloat()!!) {
             groundOffset = 0f
         }
     }
@@ -84,19 +92,19 @@ class GameLayer(context: Context, private val screenWidth: Int, private val scre
         // Tile the ground image across the bottom of the screen and scroll it
         var xOffset = groundOffset
         while (xOffset < screenWidth) {
-            canvas.drawBitmap(groundBitmap, xOffset, screenHeight - groundHeight, null)
-            xOffset += groundBitmap.width.toFloat() // Move to the next tile position
+            groundBitmap?.let { canvas.drawBitmap(it, xOffset, screenHeight - groundHeight, null) }
+            xOffset += groundBitmap?.width?.toFloat()!! // Move to the next tile position
         }
 
         // If the ground has scrolled past the left edge, reset and draw again to fill the screen
         if (groundOffset < 0) {
-            canvas.drawBitmap(groundBitmap, xOffset, screenHeight - groundHeight, null)
+            groundBitmap?.let { canvas.drawBitmap(it, xOffset, screenHeight - groundHeight, null) }
         }
 
         // Draw the platforms
         for (platform in platforms) {
             // Draw the platform image
-            canvas.drawBitmap(platformBitmap, platform.left, platform.top, null)
+            platformBitmap?.let { canvas.drawBitmap(it, platform.left, platform.top, null) }
 
             // Set up the paint for the outline (red color)
             val outlinePaint = Paint().apply {
@@ -150,7 +158,6 @@ class GameLayer(context: Context, private val screenWidth: Int, private val scre
 
         return false
     }
-
 
     // star data class
     data class Star(var x: Float, var y: Float, val radius: Float)
