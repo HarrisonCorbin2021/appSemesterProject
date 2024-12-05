@@ -2,6 +2,7 @@ package com.example.appsemesterproject
 
 import android.graphics.Canvas
 import android.view.SurfaceHolder
+import android.util.Log
 
 //Handles the game loop, calling update and draw on the GameLayer.
 class GameThread(
@@ -13,6 +14,7 @@ class GameThread(
     private var lastTime: Long = System.currentTimeMillis()
 
     override fun run() {
+        Log.d("GameThread", "GameThread: gameLayer initialized: ${gameLayer != null}")
         while (running) {
             val currentTime = System.currentTimeMillis()
             val deltaTime = (currentTime - lastTime) / 1000f

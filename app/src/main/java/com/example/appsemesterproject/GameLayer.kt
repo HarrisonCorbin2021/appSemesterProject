@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.RectF
 import android.graphics.Paint
 import android.graphics.Color
+import android.util.Log
 import kotlin.math.sqrt
 
 class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
@@ -40,24 +41,35 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
     }
 
     init {
-        // Resize the ground image to fit the screen width and a fixed height
-        groundBitmap = groundBitmap?.let { Bitmap.createScaledBitmap(it, screenWidth, groundHeight.toInt(), true) }
+        Log.d("GameLayer", "GameLayer: GameLayer Initializing")
+        // Ensure the groundBitmap is set properly
+        if (groundBitmap != null) {
+            groundBitmap = Bitmap.createScaledBitmap(groundBitmap!!, screenWidth, groundHeight.toInt(), true)
+        }
+
         // Resize the platform image to a fixed width and height
         platformBitmap = platformBitmap?.let { Bitmap.createScaledBitmap(it, 200, 50, true) }
 
         // Add platforms based on the predefined positions
-        platforms.addAll(platforms)
+        // Ensure this part is initialized correctly (the platforms list is currently empty in the original code)
+        platforms.add(RectF(100f, screenHeight - 400f, 300f, screenHeight - 350f))  // Example platform
+        platforms.add(RectF(500f, screenHeight - 500f, 700f, screenHeight - 450f))  // Another platform
+        // Add more platforms as needed
 
         // Add stars centered above each platform
         platforms.forEach { platform ->
             // Calculate the center of the platform
             val starX = platform.centerX()  // Center the star over the platform
-            val starY = platform.top - 50f  // Place the star slightly above the platform
+            val starY = platform.top - 30f  // Place the star slightly above the platform
             stars.add(Star(starX, starY, starRadius))
         }
+
+        Log.d("GameLayer", "GameLayer: groundBitmap initialized: ${groundBitmap != null}")
+        Log.d("GameLayer", "GameLayer: Drawing background: ${backgroundBitmap != null}")
     }
 
     fun update(playerSpeed: Float) {
+        //Log.d("GameLayer", "GameLayer: update called")
         // Scroll platforms with the background
         for (platform in platforms) {
             platform.offset(-playerSpeed, 0f)
@@ -83,17 +95,21 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
         groundOffset -= playerSpeed
 
         // Reset the ground offset when it goes off the screen on the left side
-        if (groundOffset <= -groundBitmap?.width?.toFloat()!!) {
+        if (groundBitmap != null && groundOffset <= -groundBitmap!!.width.toFloat()) {
             groundOffset = 0f
         }
     }
 
     fun draw(canvas: Canvas) {
+        //Log.d("GameLayer", "GameLayer: draw called")
+        // Draw background first
+        backgroundBitmap?.let { canvas.drawBitmap(it, 0f, 0f, null) }
+
         // Tile the ground image across the bottom of the screen and scroll it
         var xOffset = groundOffset
         while (xOffset < screenWidth) {
             groundBitmap?.let { canvas.drawBitmap(it, xOffset, screenHeight - groundHeight, null) }
-            xOffset += groundBitmap?.width?.toFloat()!! // Move to the next tile position
+            xOffset += groundBitmap?.width?.toFloat() ?: 0f
         }
 
         // If the ground has scrolled past the left edge, reset and draw again to fill the screen
@@ -103,17 +119,14 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
 
         // Draw the platforms
         for (platform in platforms) {
-            // Draw the platform image
             platformBitmap?.let { canvas.drawBitmap(it, platform.left, platform.top, null) }
 
-            // Set up the paint for the outline (red color)
+            // Draw the red outline around the platform (hitbox)
             val outlinePaint = Paint().apply {
                 color = Color.RED
-                strokeWidth = 5f // Set the thickness of the outline
-                style = Paint.Style.STROKE // Set the style to just outline, not fill
+                strokeWidth = 5f
+                style = Paint.Style.STROKE
             }
-
-            // Draw the red outline around the platform (hitbox)
             canvas.drawRect(platform, outlinePaint)
         }
 
@@ -123,22 +136,18 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
         }
     }
 
-
     fun checkCollision(player: Player): Boolean {
         // Check if the player collides with any platform
         for (platform in platforms) {
-            // Check for horizontal overlap: player must be within the platform’s horizontal bounds
             val isHorizontallyAligned = player.x + player.size > platform.left && player.x < platform.right
 
-            // Check if the player is falling and within the horizontal bounds of the platform
             if (isHorizontallyAligned && RectF.intersects(platform, player.getBoundingRect())) {
-                // Handle the platform collision
                 player.handlePlatformCollision(platform)
                 return true
             }
         }
 
-        // Check for collisions with stars
+        // Check for collisions with stars (allow collection regardless of state)
         val playerCenterX = player.x + player.size / 2
         val playerCenterY = player.y + player.size / 2
         val iterator = stars.iterator()
@@ -149,15 +158,16 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
             val dy = star.y - playerCenterY
             val distance = sqrt((dx * dx + dy * dy).toDouble())
 
+            // Check if the player is close enough to the star to collect it
             if (distance <= star.radius + player.size / 2) {
-                iterator.remove() // Remove the star when collected
-                // Increment the score or handle the collection logic here
+                iterator.remove()  // Remove the star when collected
                 return true
             }
         }
 
         return false
     }
+
 
     // star data class
     data class Star(var x: Float, var y: Float, val radius: Float)

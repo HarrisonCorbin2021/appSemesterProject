@@ -3,6 +3,7 @@ package com.example.appsemesterproject
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.RectF
+import android.util.Log
 
 // Data class representing a level
 data class Level(
@@ -50,10 +51,15 @@ class GameManager(private val context: Context, private val gameLayer: GameLayer
     fun loadLevel() {
         val level = levels[currentLevelIndex]
 
+
         // Load background, ground, and platforms
         val backgroundBitmap = BitmapFactory.decodeResource(context.resources, level.backgroundResId)
         val platformBitmap = BitmapFactory.decodeResource(context.resources, level.platformImageResId)
         val groundBitmap = BitmapFactory.decodeResource(context.resources, level.groundImageResId)
+
+        Log.d("GameManager", "GameManager: backgroundBitmap is set: ${backgroundBitmap != null}")
+        Log.d("GameManager", "GameManager: platformBitmap is set: ${platformBitmap != null}")
+        Log.d("GameManager", "GameManager: groundBitmap is set: ${groundBitmap != null}")
 
         gameLayer.setBackground(backgroundBitmap)
         gameLayer.setPlatformImage(platformBitmap)

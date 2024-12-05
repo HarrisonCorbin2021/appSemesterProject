@@ -9,6 +9,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var gameLayer: GameLayer
     private lateinit var gameThread: GameThread
     private lateinit var surfaceView: SurfaceView
+    private lateinit var gameManager: GameManager
+    private lateinit var gameView: GameView  // Declare GameView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,8 +26,17 @@ class MainActivity : ComponentActivity() {
         // Initialize GameLayer
         gameLayer = GameLayer(screenWidth, screenHeight)
 
+        // Initialize GameManager and pass the gameLayer
+        gameManager = GameManager(this, gameLayer)
+
+        // Load the first level
+        gameManager.loadLevel()
+
+        // Initialize GameView and pass the gameLayer to it
+        gameView = GameView(this, gameLayer)  // Pass the GameLayer to GameView
+
         // Set SurfaceView as content view
-        setContentView(surfaceView)
+        setContentView(gameView)
 
         // Initialize GameThread
         gameThread = GameThread(surfaceHolder, gameLayer)
@@ -48,5 +59,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         })
+    }
+
+    override fun onPause() {
+        super.onPause()
+        gameView.stopGame()  // Stop the game when the activity is paused
+    }
+
+    override fun onResume() {
+        super.onResume()
+        gameView.startGame()  // Restart the game when the activity is resumed
     }
 }

@@ -9,7 +9,7 @@ import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 
-class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback, Runnable {
+class GameView(context: Context, private val gameLayer: GameLayer) : SurfaceView(context), SurfaceHolder.Callback, Runnable {
 
     var isRunning = false
     private lateinit var thread: Thread
@@ -31,11 +31,9 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     private val rightButton = RectF(leftButton.right + 50f, leftButton.top, leftButton.right + 50f + buttonSize, leftButton.bottom)
     private val jumpButton = RectF(screenWidth - buttonSize - 50f, screenHeight - buttonSize - 50f, screenWidth - 50f, screenHeight - 50f)
 
-    // Overlay of game elements
-    private val gameLayer = GameLayer(screenWidth, screenHeight)
-    
-
     init {
+        Log.d("GameView", "GameView: GameView Initializing")
+        Log.d("GameView", "GameView: Player at")
         holder.addCallback(this)
         isFocusable = true
         isFocusableInTouchMode = true
@@ -43,7 +41,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        Log.d("GameView", "Surface created")
+        Log.d("GameView", "GameView: Surface created")
         startGame()
     }
 
@@ -85,8 +83,10 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     }
 
     private fun update() {
+        //Log.d("GameView", "GameView: update called")
         // Update player, background, and game layer
         player.update(isMovingLeft, isMovingRight, isJumping)
+        //Log.d("GameView", "GameView: Player position: x=${player.x}, y=${player.y}")
 
         // Prevent player from moving off the screen horizontally
         if (player.x < 0) {
@@ -120,6 +120,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     }
 
     private fun drawGame(canvas: Canvas) {
+        //Log.d("GameView", "GameView: drawGame called")
         canvas.drawBitmap(BitmapFactory.decodeResource(context.resources, R.drawable.sketchvalleybg), 0f, 0f, null)
 
         // Draw the background
@@ -182,7 +183,6 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
         }
         return true
     }
-
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         when (keyCode) {
