@@ -98,7 +98,7 @@ class GameView(context: Context, private val gameLayer: GameLayer) : SurfaceView
 
         // Update background and game layer for scrolling
         background.update(player.dx)
-        gameLayer.update(player.dx)
+        gameLayer.update(player.dx, player)
 
         // Check for collisions with platforms and stars
         if (!gameLayer.checkCollision(player)) {
@@ -161,6 +161,21 @@ class GameView(context: Context, private val gameLayer: GameLayer) : SurfaceView
         canvas.drawText("Left", leftButton.centerX(), leftButton.centerY() + 15f, textPaint)
         canvas.drawText("Right", rightButton.centerX(), rightButton.centerY() + 15f, textPaint)
         canvas.drawText("Jump", jumpButton.centerX(), jumpButton.centerY() + 15f, textPaint)
+
+        // Draw the grappling hook line if active
+        if (player.grappleTarget != null) {
+            val grappleLinePaint = Paint().apply {
+                color = Color.CYAN
+                strokeWidth = 4f
+            }
+            canvas.drawLine(
+                player.x + player.size / 2,
+                player.y + player.size / 2,
+                player.grappleTarget!!.x,
+                player.grappleTarget!!.y,
+                grappleLinePaint
+            )
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -179,6 +194,14 @@ class GameView(context: Context, private val gameLayer: GameLayer) : SurfaceView
                 isMovingLeft = false
                 isMovingRight = false
                 isJumping = false
+            }
+            MotionEvent.ACTION_DOWN -> {
+                // Check for grapple point tap
+                val activeGrapple = gameLayer.getActiveGrapple()
+                if (activeGrapple != null && activeGrapple.contains(x, y)) {
+                    // Set grapple target
+                    player.grappleTo(PointF(activeGrapple.centerX(), activeGrapple.centerY()))
+                }
             }
         }
         return true

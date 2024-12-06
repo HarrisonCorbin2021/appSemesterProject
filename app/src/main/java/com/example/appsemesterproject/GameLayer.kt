@@ -8,7 +8,19 @@ import android.graphics.Color
 import android.util.Log
 import kotlin.math.sqrt
 
-class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
+class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
+{
+
+    // Grapple-able objects or points
+    private val grapplePoints = mutableListOf<RectF>()
+    private val grappleReticlePaint = Paint().apply {
+        color = Color.CYAN
+        style = Paint.Style.STROKE
+        strokeWidth = 5f
+    }
+
+    // The current grapple target
+    private var activeGrapple: RectF? = null
 
     // Load platform and ground images
     private var backgroundBitmap: Bitmap? = null
@@ -68,24 +80,30 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
         Log.d("GameLayer", "GameLayer: Drawing background: ${backgroundBitmap != null}")
     }
 
-    fun update(playerSpeed: Float) {
+    fun update(playerSpeed: Float, player: Player)
+    {
         //Log.d("GameLayer", "GameLayer: update called")
         // Scroll platforms with the background
-        for (platform in platforms) {
+        for (platform in platforms)
+        {
             platform.offset(-playerSpeed, 0f)
         }
 
         // Scroll stars with the background
-        for (star in stars) {
+        for (star in stars)
+        {
             star.x -= playerSpeed
         }
 
         // Check and reset platforms when they move off the left or right side of the screen
-        for (platform in platforms) {
-            if (platform.right < 0) {
+        for (platform in platforms)
+        {
+            if (platform.right < 0)
+            {
                 // Move platform to the right side of the screen to be revisitable
                 platform.offset(screenWidth + platform.width(), 0f)
-            } else if (platform.left > screenWidth) {
+            } else if (platform.left > screenWidth)
+            {
                 // Move platform to the left side of the screen to be revisitable
                 platform.offset(-screenWidth - platform.width(), 0f)
             }
@@ -95,12 +113,16 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
         groundOffset -= playerSpeed
 
         // Reset the ground offset when it goes off the screen on the left side
-        if (groundBitmap != null && groundOffset <= -groundBitmap!!.width.toFloat()) {
+        if (groundBitmap != null && groundOffset <= -groundBitmap!!.width.toFloat())
+        {
             groundOffset = 0f
         }
+        activeGrapple = grapplePoints.find { point ->
+            RectF.intersects(player.getBoundingRect(), point)}
     }
 
-    fun draw(canvas: Canvas) {
+    fun draw(canvas: Canvas)
+    {
         //Log.d("GameLayer", "GameLayer: draw called")
         // Draw background first
         backgroundBitmap?.let { canvas.drawBitmap(it, 0f, 0f, null) }
@@ -118,7 +140,8 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
         }
 
         // Draw the platforms
-        for (platform in platforms) {
+        for (platform in platforms)
+        {
             platformBitmap?.let { canvas.drawBitmap(it, platform.left, platform.top, null) }
 
             // Draw the red outline around the platform (hitbox)
@@ -127,16 +150,22 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
                 strokeWidth = 5f
                 style = Paint.Style.STROKE
             }
+            //Test grappling points
+            grapplePoints.add(RectF(400f, 800f, 450f, 850f))
+            grapplePoints.add(RectF(900f, 700f, 950f, 750f))
             canvas.drawRect(platform, outlinePaint)
         }
 
         // Draw the stars
-        for (star in stars) {
+        for (star in stars)
+        {
             canvas.drawCircle(star.x, star.y, star.radius, starPaint)
         }
+
     }
 
-    fun checkCollision(player: Player): Boolean {
+    fun checkCollision(player: Player): Boolean
+    {
         // Check if the player collides with any platform
         for (platform in platforms) {
             val isHorizontallyAligned = player.x + player.size > platform.left && player.x < platform.right
@@ -171,4 +200,8 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int) {
 
     // star data class
     data class Star(var x: Float, var y: Float, val radius: Float)
+
+    //Returns what's being grappled
+    fun getActiveGrapple(): RectF? = activeGrapple
+
 }

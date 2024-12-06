@@ -10,7 +10,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var gameThread: GameThread
     private lateinit var surfaceView: SurfaceView
     private lateinit var gameManager: GameManager
-    private lateinit var gameView: GameView  // Declare GameView
+    private lateinit var gameView: GameView
+    private lateinit var player: Player
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +33,9 @@ class MainActivity : ComponentActivity() {
         // Load the first level
         gameManager.loadLevel()
 
+        //Initialize the player
+        player = Player(0f,0f)
+
         // Initialize GameView and pass the gameLayer to it
         gameView = GameView(this, gameLayer)  // Pass the GameLayer to GameView
 
@@ -39,7 +43,7 @@ class MainActivity : ComponentActivity() {
         setContentView(gameView)
 
         // Initialize GameThread
-        gameThread = GameThread(surfaceHolder, gameLayer)
+        gameThread = GameThread(surfaceHolder, gameLayer, player)
 
         // Manage the lifecycle of the SurfaceHolder
         surfaceHolder.addCallback(object : SurfaceHolder.Callback {
