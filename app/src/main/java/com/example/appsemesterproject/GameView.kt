@@ -165,7 +165,7 @@ class GameView(context: Context, private val gameLayer: GameLayer) : SurfaceView
         // Draw the grappling hook line if active
         if (player.grappleTarget != null) {
             val grappleLinePaint = Paint().apply {
-                color = Color.CYAN
+                color = Color.BLACK
                 strokeWidth = 4f
             }
             canvas.drawLine(

@@ -14,9 +14,9 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
     // Grapple-able objects or points
     private val grapplePoints = mutableListOf<RectF>()
     private val grappleReticlePaint = Paint().apply {
-        color = Color.CYAN
+        color = Color.BLACK
         style = Paint.Style.STROKE
-        strokeWidth = 5f
+        strokeWidth = 10f
     }
 
     // The current grapple target
@@ -67,6 +67,10 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
         platforms.add(RectF(100f, screenHeight - 400f, 300f, screenHeight - 350f))  // Example platform
         platforms.add(RectF(500f, screenHeight - 500f, 700f, screenHeight - 450f))  // Another platform
         // Add more platforms as needed
+
+        //Test grappling points
+        grapplePoints.add(RectF(400f, 800f, 450f, 850f))
+        grapplePoints.add(RectF(900f, 700f, 950f, 750f))
 
         // Add stars centered above each platform
         platforms.forEach { platform ->
@@ -150,9 +154,6 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
                 strokeWidth = 5f
                 style = Paint.Style.STROKE
             }
-            //Test grappling points
-            grapplePoints.add(RectF(400f, 800f, 450f, 850f))
-            grapplePoints.add(RectF(900f, 700f, 950f, 750f))
             canvas.drawRect(platform, outlinePaint)
         }
 
@@ -162,6 +163,10 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
             canvas.drawCircle(star.x, star.y, star.radius, starPaint)
         }
 
+        for(grapple in grapplePoints)
+        {
+            canvas.drawRect(grapple, grappleReticlePaint)
+        }
     }
 
     fun checkCollision(player: Player): Boolean
