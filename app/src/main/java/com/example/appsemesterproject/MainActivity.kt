@@ -30,11 +30,13 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 
 class MainActivity : ComponentActivity() {
+
     public lateinit var gameLayer: GameLayer
     public lateinit var gameThread: GameThread
     public lateinit var surfaceView: SurfaceView
     public lateinit var gameManager: GameManager
     public lateinit var gameView: GameView
+    public lateinit var player: Player
 
     private lateinit var auth: FirebaseAuth
     private lateinit var database: DatabaseReference
@@ -156,10 +158,14 @@ class MainActivity : ComponentActivity() {
         gameManager = GameManager(this, gameLayer, player)
         gameManager.loadLevel(0)
 
+        //Initialize the player
+        player = Player(0f,0f)
         gameView = GameView(this, gameLayer, player)
+
 
         setContentView(gameView)
 
+        // Initialize GameThread
         gameThread = GameThread(surfaceHolder, gameLayer, player)
 
         surfaceHolder.addCallback(object : SurfaceHolder.Callback {

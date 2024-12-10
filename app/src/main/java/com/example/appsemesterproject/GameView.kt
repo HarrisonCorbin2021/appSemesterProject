@@ -99,7 +99,6 @@ class GameView(context: Context, private val gameLayer: GameLayer, private val p
         // Update background and game layer for scrolling
         background.update(player.dx)
         gameLayer.update(player.dx, player.x)
-
         // Always check for star collisions
         gameLayer.checkCollision(player)
 
@@ -164,6 +163,30 @@ class GameView(context: Context, private val gameLayer: GameLayer, private val p
         canvas.drawText("Left", leftButton.centerX(), leftButton.centerY() + 15f, textPaint)
         canvas.drawText("Right", rightButton.centerX(), rightButton.centerY() + 15f, textPaint)
         canvas.drawText("Jump", jumpButton.centerX(), jumpButton.centerY() + 15f, textPaint)
+
+        // Draw grappling points
+        val grapplePaint = Paint().apply {
+            color = Color.BLUE
+            style = Paint.Style.FILL
+        }
+        for (point in gameLayer.getGrapplePoints()) {
+            canvas.drawCircle(point.x, point.y, 20f, grapplePaint)
+        }
+
+        // Draw the grappling hook line if active
+        if (player.grappleTarget != null) {
+            val grappleLinePaint = Paint().apply {
+                color = Color.BLACK
+                strokeWidth = 4f
+            }
+            canvas.drawLine(
+                player.x + player.size / 2,
+                player.y + player.size / 2,
+                player.grappleTarget!!.x,
+                player.grappleTarget!!.y,
+                grappleLinePaint
+            )
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -177,6 +200,21 @@ class GameView(context: Context, private val gameLayer: GameLayer, private val p
                 if (x < jumpButton.right && x > jumpButton.left && y < jumpButton.bottom && y > jumpButton.top) {
                     isJumping = !player.isInAir  // Set jumping to true if player is not in air
                 }
+
+                val touchRadius = 50f // Define a reasonable radius for touch detection
+                val activeGrapple = gameLayer.getActiveGrapple()
+                if (activeGrapple != null) {
+                    val distance = Math.sqrt(
+                        Math.pow((activeGrapple.x - x).toDouble(), 2.0) +
+                                Math.pow((activeGrapple.y - y).toDouble(), 2.0)
+                    ).toFloat()
+
+                    if (distance <= touchRadius) {
+                        // Set grapple target
+                        player.grappleTo(PointF(activeGrapple.x, activeGrapple.y))
+                    }
+                }
+
             }
             MotionEvent.ACTION_UP -> {
                 isMovingLeft = false

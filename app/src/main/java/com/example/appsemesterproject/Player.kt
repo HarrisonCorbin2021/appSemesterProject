@@ -1,43 +1,47 @@
 package com.example.appsemesterproject
 
-import android.content.res.Resources
+import android.graphics.PointF
 import android.graphics.RectF
+import kotlin.math.sqrt
 
 class Player(var x: Float, var y: Float) {
+    var dx: Float = 0f
+    var dy: Float = 0f
+    var isInAir: Boolean = false
+    var size: Float = 50f
 
-    var dx = 0f
-    var dy = 0f
-    val size = 50f  // Player size (square)
-    private val gravity = 1.0f  // Gravity strength
-    private val jumpStrength = 15f  // Jump strength
-    private val maxFallSpeed = 40f  // Maximum falling speed
-    var isInAir = false
-    private val displayMetrics = Resources.getSystem().displayMetrics
-    private val screenHeight = displayMetrics.heightPixels
+    private var grappling: Boolean = false
+    var grappleTarget: PointF? = null
+    private val grappleSpeed = 15f
 
-    // Update player position based on movement and gravity
     fun update(isMovingLeft: Boolean, isMovingRight: Boolean, isJumping: Boolean) {
-        // Handle horizontal movement
-        if (isMovingLeft) {
-            dx = -20f  // Move left
-        } else if (isMovingRight) {
-            dx = 20f  // Move right
+        if (grappling && grappleTarget != null) {
+            // Move toward grapple target
+            val directionX = grappleTarget!!.x - (x + size / 2)
+            val directionY = grappleTarget!!.y - (y + size / 2)
+            val distance = sqrt(directionX * directionX + directionY * directionY)
+
+            if (distance < grappleSpeed) {
+                // Stop grappling when close enough
+                grappling = false
+                grappleTarget = null
+            } else {
+                // Normalize direction and move
+                dx = directionX / distance * grappleSpeed
+                dy = directionY / distance * grappleSpeed
+            }
         } else {
-            dx = 0f  // No horizontal movement
+            // Normal movement logic
+            if (isMovingLeft) dx = -5f
+            if (isMovingRight) dx = 5f
+            if (isJumping && !isInAir) {
+                dy = -15f
+                isInAir = true
+            }
+            dy += 0.5f // Gravity
         }
 
-        // Handle jumping (apply gravity if not jumping)
-        if (isJumping && !isInAir) {
-            dy = -jumpStrength
-            isInAir = true
-        }
-
-        // Apply gravity when falling (if player is in the air)
-        if (dy < maxFallSpeed) {
-            dy += gravity
-        }
-
-        // Update position based on movement
+        // Apply movement
         x += dx
         y += dy
 
@@ -61,8 +65,20 @@ class Player(var x: Float, var y: Float) {
         }
     }
 
-    // Return the player's bounding rectangle for collision detection
-    fun getBoundingRect(): RectF {
-        return RectF(x, y, x + size, y + size)
+    fun grappleTo(target: PointF) {
+        grappling = true
+        grappleTarget = target
+        isInAir = true
     }
+
+    fun isNear(grapplePoint: GameLayer.GrapplePoint, proximityThreshold: Float = 100f): Boolean {
+        val pointX = grapplePoint.x
+        val pointY = grapplePoint.y
+        val dx = pointX - x
+        val dy = pointY - y
+        val distance = sqrt(dx * dx + dy * dy)
+        return distance <= proximityThreshold
+    }
+
+    fun getBoundingRect(): RectF = RectF(x, y, x + size, y + size)
 }
