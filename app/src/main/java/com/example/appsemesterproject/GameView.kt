@@ -72,15 +72,19 @@ class GameView(context: Context, private val gameLayer: GameLayer, private val p
         while (isRunning) {
             if (holder.surface.isValid) {
                 val canvas = holder.lockCanvas()
-                try {
-                    update()
-                    drawGame(canvas)
-                } finally {
-                    holder.unlockCanvasAndPost(canvas)
+                if (canvas != null) {  // Ensure the canvas is valid before proceeding
+                    try {
+                        update()
+                        drawGame(canvas)
+                    } finally {
+                        // Unlock the canvas and post it back
+                        holder.unlockCanvasAndPost(canvas)
+                    }
                 }
             }
         }
     }
+
 
     private fun update() {
         //Log.d("GameView", "GameView: update called")

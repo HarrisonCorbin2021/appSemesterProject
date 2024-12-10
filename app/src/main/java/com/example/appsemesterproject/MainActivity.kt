@@ -155,16 +155,15 @@ class MainActivity : ComponentActivity() {
         player.update(false, false, false)
         gameLayer = GameLayer(screenWidth, screenHeight, player)
 
-        gameManager = GameManager(this, gameLayer, player)
-        gameManager.loadLevel(0)
-
         gameView = GameView(this, gameLayer, player)
-
 
         setContentView(gameView)
 
         // Initialize GameThread
         gameThread = GameThread(surfaceHolder, gameLayer, player)
+
+        gameManager = GameManager(this, gameLayer, player, gameThread)
+        gameManager.loadLevel(0)
 
         surfaceHolder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
@@ -206,14 +205,14 @@ class MainActivity : ComponentActivity() {
                 val player = Player(savedPlayerPositionX, savedPlayerPositionY)
                 gameLayer = GameLayer(resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels, player)
 
-                gameManager = GameManager(this, gameLayer, player)
-                gameManager.loadLevel(savedLevel)  // Pass saved level
-
                 gameView = GameView(this, gameLayer, player)
 
                 setContentView(gameView)
 
                 gameThread = GameThread(gameView.holder, gameLayer, player)
+
+                gameManager = GameManager(this, gameLayer, player, gameThread)
+                gameManager.loadLevel(savedLevel)  // Pass saved level
 
                 gameView.holder.addCallback(object : SurfaceHolder.Callback {
                     override fun surfaceCreated(holder: SurfaceHolder) {

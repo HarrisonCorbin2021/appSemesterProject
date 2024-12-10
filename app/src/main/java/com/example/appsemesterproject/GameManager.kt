@@ -26,14 +26,11 @@ private val platformChalkSketch = listOf(
     RectF(1600f, 1500f, 1800f, 1550f)  // Platform 4
 )
 
-
-// GameManager handles level progression and theme setup
-class GameManager(private val context: Context, private val gameLayer: GameLayer, private val player: Player) : GameLayer.LevelTransitionListener {
+class GameManager(private val context: Context, private val gameLayer: GameLayer, private val player: Player, private val gameThread: GameThread) : GameLayer.LevelTransitionListener {
 
     private val levels = listOf(
         // Act 1
-        Level(1, 1, "Chalk Sketch Valley", R.drawable.sketchvalleybg, R.drawable.platformdflat, R.drawable.platforma, platformChalkSketch),
-        // Add more levels if needed
+        Level(1, 1, "Chalk Sketch Valley", R.drawable.sketchvalleybg, R.drawable.platformdflat, R.drawable.platforma, platformChalkSketch)
     )
 
     private var currentLevelIndex = 0
@@ -60,9 +57,6 @@ class GameManager(private val context: Context, private val gameLayer: GameLayer
         gameLayer.setBackground(backgroundBitmap)
         gameLayer.setPlatformImage(platformBitmap)
         gameLayer.setGroundImage(groundBitmap)
-
-        // Apply level-specific mechanics (if any)
-        //applyThemeMechanics(level.theme)
     }
 
     fun nextLevel() {
@@ -78,10 +72,9 @@ class GameManager(private val context: Context, private val gameLayer: GameLayer
     private fun showGameCompleteScreen() {
         // Create an intent to navigate to the GameCompleteActivity
         val intent = Intent(context, GameCompleteActivity::class.java)
+        //intent.putExtra("score", player.score) // Send score data
+        intent.putExtra("level", currentLevelIndex) // Send level data
         context.startActivity(intent)
-
-        // Optionally, you can display a message or handle any other game completion tasks
-        println("Congratulations! You've completed the game!")
     }
 
     // Handle player's collision with the door
@@ -97,7 +90,6 @@ class GameManager(private val context: Context, private val gameLayer: GameLayer
             showGameCompleteScreen()
         }
     }
-
 
     // Implement the LevelTransitionListener method
     override fun onLevelComplete() {
