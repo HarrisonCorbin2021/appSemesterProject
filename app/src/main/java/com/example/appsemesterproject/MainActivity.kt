@@ -158,8 +158,6 @@ class MainActivity : ComponentActivity() {
         gameManager = GameManager(this, gameLayer, player)
         gameManager.loadLevel(0)
 
-        //Initialize the player
-        player = Player(0f,0f)
         gameView = GameView(this, gameLayer, player)
 
 

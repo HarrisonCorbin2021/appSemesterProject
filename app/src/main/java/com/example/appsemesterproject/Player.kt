@@ -1,5 +1,6 @@
 package com.example.appsemesterproject
 
+import android.content.res.Resources
 import android.graphics.PointF
 import android.graphics.RectF
 import kotlin.math.sqrt
@@ -14,26 +15,33 @@ class Player(var x: Float, var y: Float) {
     var grappleTarget: PointF? = null
     private val grappleSpeed = 15f
 
+    private val displayMetrics = Resources.getSystem().displayMetrics
+    private val screenWidth = displayMetrics.widthPixels
+    private val screenHeight = displayMetrics.heightPixels
+
     fun update(isMovingLeft: Boolean, isMovingRight: Boolean, isJumping: Boolean) {
+        // Reset horizontal movement if no direction is pressed
+        if (!isMovingLeft && !isMovingRight) {
+            dx = 0f
+        }
+
         if (grappling && grappleTarget != null) {
-            // Move toward grapple target
+            // Grappling logic remains the same
             val directionX = grappleTarget!!.x - (x + size / 2)
             val directionY = grappleTarget!!.y - (y + size / 2)
             val distance = sqrt(directionX * directionX + directionY * directionY)
 
             if (distance < grappleSpeed) {
-                // Stop grappling when close enough
                 grappling = false
                 grappleTarget = null
             } else {
-                // Normalize direction and move
                 dx = directionX / distance * grappleSpeed
                 dy = directionY / distance * grappleSpeed
             }
         } else {
             // Normal movement logic
-            if (isMovingLeft) dx = -5f
-            if (isMovingRight) dx = 5f
+            if (isMovingLeft) dx = -15f
+            if (isMovingRight) dx = 15f
             if (isJumping && !isInAir) {
                 dy = -15f
                 isInAir = true
@@ -49,11 +57,12 @@ class Player(var x: Float, var y: Float) {
         if (y > screenHeight - 300f - size) {
             y = screenHeight - 300f - size
             dy = 0f
-            if (isInAir) { // Only update if the player was in the air
-                isInAir = false  // Player is on the ground, can jump again
+            if (isInAir) {
+                isInAir = false
             }
         }
     }
+
 
     fun handlePlatformCollision(platform: RectF) {
         // If the player is falling and intersects with the platform

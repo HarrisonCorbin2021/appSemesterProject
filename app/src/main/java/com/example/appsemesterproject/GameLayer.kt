@@ -11,8 +11,6 @@ import kotlin.math.sqrt
 
 class GameLayer(private val screenWidth: Int, private val screenHeight: Int, private val player: Player) {
 
-    private val player = Player(100f, 300f)
-
     // Grapple-able objects or points
     private val grapplePoints = mutableListOf<GrapplePoint>()
     private val grappleReticlePaint = Paint().apply {
@@ -171,7 +169,7 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int, pri
     }
 
 
-    fun draw(canvas: Canvas)
+    fun draw(canvas: Canvas) {
 
         // Draw background first
         backgroundBitmap?.let { canvas.drawBitmap(it, 0f, 0f, null) }
@@ -290,7 +288,7 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int, pri
     }
 
     // star data class
-    data class Star(var x: Float, var y: Float, val radius: Float)
+    data class Star(var x: Float, var y: Float, val size: Float)
 
     //grapplepoint data class
     data class GrapplePoint(val x: Float, val y: Float, val radius: Float = 50f)
