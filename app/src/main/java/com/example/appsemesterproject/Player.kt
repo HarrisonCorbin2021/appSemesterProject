@@ -41,8 +41,6 @@ class Player(var x: Float, var y: Float) {
         x += dx
         y += dy
 
-        // Debugging: Log player's vertical position and ground height for comparison
-
         // Check for landing (collision with ground)
         if (y > screenHeight - 300f - size) {
             y = screenHeight - 300f - size

@@ -39,6 +39,7 @@ class LoginActivity : ComponentActivity() {
     fun LoginScreen() {
         val email = remember { androidx.compose.runtime.mutableStateOf("") }
         val password = remember { androidx.compose.runtime.mutableStateOf("") }
+        val sourceActivity = intent.getStringExtra("sourceActivity") ?: "MainActivity" // Default to MainActivity if not provided
 
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.padding(16.dp)) {
@@ -61,7 +62,7 @@ class LoginActivity : ComponentActivity() {
 
                 Button(
                     onClick = {
-                        loginUser(email.value, password.value)
+                        loginUser(email.value, password.value, sourceActivity)
                     },
                     modifier = Modifier.padding(top = 16.dp)
                 ) {
@@ -70,7 +71,7 @@ class LoginActivity : ComponentActivity() {
 
                 Button(
                     onClick = {
-                        navigateToSignUp()
+                        navigateToSignUp(sourceActivity)
                     },
                     modifier = Modifier.padding(top = 16.dp)
                 ) {
@@ -80,12 +81,17 @@ class LoginActivity : ComponentActivity() {
         }
     }
 
-    private fun loginUser(email: String, password: String) {
+    private fun loginUser(email: String, password: String, sourceActivity: String) {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this, SettingsActivity::class.java))
+                    val intent = if (sourceActivity == "SettingsActivity") {
+                        Intent(this, SettingsActivity::class.java)
+                    } else {
+                        Intent(this, MainActivity::class.java)
+                    }
+                    startActivity(intent)
                     finish()
                 } else {
                     Toast.makeText(this, "Login Failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
@@ -93,8 +99,9 @@ class LoginActivity : ComponentActivity() {
             }
     }
 
-    private fun navigateToSignUp() {
+    private fun navigateToSignUp(sourceActivity: String) {
         val intent = Intent(this, SignUpActivity::class.java)
+        intent.putExtra("sourceActivity", sourceActivity)
         startActivity(intent)
     }
 }

@@ -7,7 +7,8 @@ import android.util.Log
 //Handles the game loop, calling update and draw on the GameLayer.
 class GameThread(
     private val surfaceHolder: SurfaceHolder,
-    private val gameLayer: GameLayer
+    private val gameLayer: GameLayer,
+    private val player: Player
 ) : Thread() {
 
     var running: Boolean = true
@@ -24,7 +25,7 @@ class GameThread(
             try {
                 canvas = surfaceHolder.lockCanvas()
                 synchronized(surfaceHolder) {
-                    gameLayer.update(deltaTime)
+                    gameLayer.update(player.dx, player.x)
                     gameLayer.draw(canvas)
                 }
             } catch (e: Exception) {
@@ -44,4 +45,9 @@ class GameThread(
         }
     }
 
+    // Method to stop the game thread
+    fun stopThread() {
+        running = false
+        interrupt()  // Interrupt the thread if it's currently sleeping or waiting
+    }
 }

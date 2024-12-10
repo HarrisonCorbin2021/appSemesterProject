@@ -47,7 +47,7 @@ class SettingsActivity : ComponentActivity() {
     @Composable
     fun SettingsScreen() {
         val isLoggedIn = auth.currentUser != null
-        val context = LocalContext.current // Use LocalContext to access the context
+        val context = LocalContext.current
 
         Column(
             modifier = Modifier
@@ -68,57 +68,44 @@ class SettingsActivity : ComponentActivity() {
             )
 
             if (isLoggedIn) {
-                // Show Save, Load, and Logout buttons
-                SaveLoadLogoutButtons(context)
+                // Show Logout button when user is logged in
+                LogoutButton(context)
             } else {
-                // Show Login button if user is not logged in
-                LoginButton(context)
+                // Show Login and Sign Up buttons if user is not logged in
+                LoginSignUpButtons(context)
             }
         }
     }
 
     @Composable
-    fun LoginButton(context: android.content.Context) {
+    fun LoginSignUpButtons(context: android.content.Context) {
+        // Login button
         Button(
             onClick = {
                 val intent = Intent(context, LoginActivity::class.java)
+                intent.putExtra("sourceActivity", "SettingsActivity")
                 context.startActivity(intent)
             },
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
             Text("Login")
         }
+
+        // Sign Up button
+        Button(
+            onClick = {
+                val intent = Intent(context, SignUpActivity::class.java)
+                intent.putExtra("sourceActivity", "SettingsActivity")
+                context.startActivity(intent)
+            },
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            Text("Sign Up")
+        }
     }
 
     @Composable
-    fun SaveLoadLogoutButtons(context: android.content.Context) {
-        // Save button
-        Button(
-            onClick = {
-                // Debounce the button clicks to avoid rapid successive clicks
-                CoroutineScope(Dispatchers.Main).launch {
-                    saveProgress(context)
-                }
-            },
-            modifier = Modifier.padding(bottom = 8.dp)
-        ) {
-            Text("Save Progress")
-        }
-
-        // Load button
-        Button(
-            onClick = {
-                // Debounce the button clicks to avoid rapid successive clicks
-                CoroutineScope(Dispatchers.Main).launch {
-                    loadProgress(context)
-                }
-            },
-            modifier = Modifier.padding(bottom = 8.dp)
-        ) {
-            Text("Load Progress")
-        }
-
-        // Logout button
+    fun LogoutButton(context: android.content.Context) {
         Button(
             onClick = {
                 // Debounce the button clicks to avoid rapid successive clicks
@@ -133,56 +120,6 @@ class SettingsActivity : ComponentActivity() {
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
             Text("Logout")
-        }
-    }
-
-    private suspend fun saveProgress(context: android.content.Context) {
-        val userId = auth.currentUser?.uid
-        if (userId != null) {
-            try {
-                val currentLevel = 5
-                val currentScore = 1500
-                val playerPosition = mapOf("x" to 100.0f, "y" to 200.0f)
-
-                val gameData = mapOf(
-                    "level" to currentLevel,
-                    "score" to currentScore,
-                    "position" to playerPosition
-                )
-
-                // Perform the Firestore save operation on a background thread
-                db.collection("users").document(userId).set(gameData).await()
-
-                // Show success message on the main thread
-                Toast.makeText(context, "Game progress saved!", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                // Show failure message on the main thread if something goes wrong
-                Toast.makeText(context, "Failed to save progress: $e", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private suspend fun loadProgress(context: android.content.Context) {
-        val userId = auth.currentUser?.uid
-        if (userId != null) {
-            try {
-                // Perform the Firestore load operation on a background thread
-                val document = db.collection("users").document(userId).get().await()
-
-                if (document.exists()) {
-                    val level = document.getLong("level") ?: 0
-                    val score = document.getLong("score") ?: 0
-                    val position = document.get("position") as? Map<*, *>
-                    val x = position?.get("x") as? Float ?: 0f
-                    val y = position?.get("y") as? Float ?: 0f
-
-                    // Show loaded data on the main thread
-                    Toast.makeText(context, "Loaded: Level $level, Score $score, Position X:$x Y:$y", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                // Show failure message on the main thread if something goes wrong
-                Toast.makeText(context, "Failed to load progress: $e", Toast.LENGTH_SHORT).show()
-            }
         }
     }
 }
