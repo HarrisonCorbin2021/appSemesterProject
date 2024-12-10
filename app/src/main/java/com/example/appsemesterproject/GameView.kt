@@ -9,12 +9,12 @@ import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 
-class GameView(context: Context, private val gameLayer: GameLayer) : SurfaceView(context), SurfaceHolder.Callback, Runnable {
+class GameView(context: Context, private val gameLayer: GameLayer, private val player: Player) : SurfaceView(context), SurfaceHolder.Callback, Runnable {
 
     var isRunning = false
     private lateinit var thread: Thread
 
-    private val player = Player(100f, 300f)
+
     private val displayMetrics = Resources.getSystem().displayMetrics
     private val screenWidth = displayMetrics.widthPixels
     private val screenHeight = displayMetrics.heightPixels
@@ -98,7 +98,9 @@ class GameView(context: Context, private val gameLayer: GameLayer) : SurfaceView
 
         // Update background and game layer for scrolling
         background.update(player.dx)
-        gameLayer.update(player.dx, player)
+        gameLayer.update(player.dx, player.x)
+        // Always check for star collisions
+        gameLayer.checkCollision(player)
 
         // Check for collisions with platforms and stars
         if (!gameLayer.checkCollision(player)) {

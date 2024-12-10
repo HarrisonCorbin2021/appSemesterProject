@@ -44,6 +44,15 @@ class Player(var x: Float, var y: Float) {
         // Apply movement
         x += dx
         y += dy
+
+        // Check for landing (collision with ground)
+        if (y > screenHeight - 300f - size) {
+            y = screenHeight - 300f - size
+            dy = 0f
+            if (isInAir) { // Only update if the player was in the air
+                isInAir = false  // Player is on the ground, can jump again
+            }
+        }
     }
 
     fun handlePlatformCollision(platform: RectF) {

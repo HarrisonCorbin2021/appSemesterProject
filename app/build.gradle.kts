@@ -75,6 +75,8 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation(libs.firebase.auth.ktx)
     implementation(libs.androidx.ui.test.android)
+    implementation("com.google.firebase:firebase-database")
+
 
     // Test dependencies
     testImplementation(libs.junit)

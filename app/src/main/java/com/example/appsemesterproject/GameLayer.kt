@@ -8,8 +8,8 @@ import android.graphics.Color
 import android.util.Log
 import kotlin.math.sqrt
 
-class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
-{
+
+class GameLayer(private val screenWidth: Int, private val screenHeight: Int, private val player: Player) {
 
     private val player = Player(100f, 300f)
 
@@ -24,6 +24,11 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
     // The current grapple target
     private var activeGrapple: GrapplePoint? = null
 
+    interface LevelTransitionListener {
+        fun onLevelComplete()
+    }
+
+
     // Load platform and ground images
     private var backgroundBitmap: Bitmap? = null
     private var platformBitmap: Bitmap? = null
@@ -31,15 +36,29 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
     //private var bossBitmap: Bitmap? = null
 
     private val platforms = mutableListOf<RectF>() // Rectangles representing platforms
-    //private val ground = Rect(0, screenHeight - 100, screenWidth, screenHeight) // Ground rectangle
 
     val groundHeight = 300f  // Height of the ground image
     private var groundOffset = 0f  // The current offset of the ground for scrolling
 
     // Stars for scoring
     private val stars = mutableListOf<Star>()
-    private val starRadius = 10f // Radius of the stars
+    private val starRadius = 10f
     private val starPaint = Paint().apply { color = Color.YELLOW }
+
+    // Level boundary
+    private val levelWidth = 1000f
+    private var door: RectF? = null
+    private val doorWidth = 50f
+    private val doorHeight = 100f
+    private var doorAppeared = false
+    private var doorCollided = false  // Flag to track door collision
+
+    private var levelTransitionListener: LevelTransitionListener? = null
+
+    // Set the listener from GameManager or other components
+    fun setLevelTransitionListener(listener: LevelTransitionListener) {
+        this.levelTransitionListener = listener
+    }
 
     // Setters for game elements
     fun setBackground(bitmap: Bitmap) {
@@ -65,7 +84,6 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
         platformBitmap = platformBitmap?.let { Bitmap.createScaledBitmap(it, 200, 50, true) }
 
         // Add platforms based on the predefined positions
-        // Ensure this part is initialized correctly (the platforms list is currently empty in the original code)
         platforms.add(RectF(100f, screenHeight - 400f, 300f, screenHeight - 350f))  // Example platform
         platforms.add(RectF(500f, screenHeight - 500f, 700f, screenHeight - 450f))  // Another platform
         // Add more platforms as needed
@@ -86,9 +104,8 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
         Log.d("GameLayer", "GameLayer: Drawing background: ${backgroundBitmap != null}")
     }
 
-    fun update(playerSpeed: Float, player: Player)
-    {
-        //Log.d("GameLayer", "GameLayer: update called")
+    fun update(playerSpeed: Float, playerX: Float) {
+
         // Scroll platforms with the background
         for (platform in platforms)
         {
@@ -118,10 +135,31 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
         // Scroll the ground by updating its offset based on the player's movement
         groundOffset -= playerSpeed
 
-        // Reset the ground offset when it goes off the screen on the left side
-        if (groundBitmap != null && groundOffset <= -groundBitmap!!.width.toFloat())
-        {
-            groundOffset = 0f
+
+        // Wrap ground tiles when moving left or right
+        if (groundBitmap != null) {
+            val groundWidth = groundBitmap!!.width.toFloat()
+            if (groundOffset <= -groundWidth) {
+                groundOffset += groundWidth
+            } else if (groundOffset >= groundWidth) {
+                groundOffset -= groundWidth
+            }
+        }
+
+        // Check if the player has passed 1000 pixels and create the door
+        if (!doorAppeared && playerX > 1000f) {
+            doorAppeared = true
+            // Create the door at the right side of the screen at ground level
+            door = RectF(
+                screenWidth - doorWidth - 200,
+                screenHeight - groundHeight - doorHeight + 34,  // Place door directly at ground level
+                screenWidth.toFloat() - 200,
+                screenHeight - groundHeight + 34 // Set the bottom of the door at the ground level
+            )
+
+            // Debug log to check the door's position
+            Log.d("GameLayer", "Screen Height: $screenHeight, Ground Height: $groundHeight")
+            Log.d("GameLayer", "Door Position - Left: ${door?.left}, Top: ${door?.top}, Right: ${door?.right}, Bottom: ${door?.bottom}")
         }
         activeGrapple = grapplePoints.find { point ->
             val distanceX = point.x - (player.x + player.size / 2)
@@ -132,28 +170,54 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
 
     }
 
+
     fun draw(canvas: Canvas)
-    {
-        //Log.d("GameLayer", "GameLayer: draw called")
+
         // Draw background first
         backgroundBitmap?.let { canvas.drawBitmap(it, 0f, 0f, null) }
 
+        // Offset to adjust the vertical placement of the ground
+        val groundYOffset = 50f // Adjust this value to align the ground image properly
+
+        // Start xOffset from one tile width before the visible screen to preload the ground tiles
+        val groundWidth = groundBitmap?.width?.toFloat() ?: 0f
+        var xOffset = groundOffset % groundWidth
+        if (xOffset > 0) xOffset -= groundWidth
+
         // Tile the ground image across the bottom of the screen and scroll it
-        var xOffset = groundOffset
         while (xOffset < screenWidth) {
-            groundBitmap?.let { canvas.drawBitmap(it, xOffset, screenHeight - groundHeight, null) }
-            xOffset += groundBitmap?.width?.toFloat() ?: 0f
+            groundBitmap?.let {
+                canvas.drawBitmap(it, xOffset, screenHeight - groundHeight + groundYOffset, null)
+            }
+            xOffset += groundWidth
         }
 
         // If the ground has scrolled past the left edge, reset and draw again to fill the screen
         if (groundOffset < 0) {
-            groundBitmap?.let { canvas.drawBitmap(it, xOffset, screenHeight - groundHeight, null) }
+            groundBitmap?.let {
+                canvas.drawBitmap(it, xOffset, screenHeight - groundHeight + groundYOffset, null)
+            }
+        }
+
+        door?.let {
+            val doorPaint = Paint().apply {
+                color = Color.GREEN  // Set color for the door
+            }
+            canvas.drawRect(it, doorPaint)
         }
 
         // Draw the platforms
-        for (platform in platforms)
-        {
-            platformBitmap?.let { canvas.drawBitmap(it, platform.left, platform.top, null) }
+        for (platform in platforms) {
+            platformBitmap?.let {
+                val scaledBitmap = Bitmap.createScaledBitmap(
+                    it,
+                    platform.width().toInt(),
+                    platform.height().toInt(),
+                    true
+                )
+                canvas.drawBitmap(scaledBitmap, platform.left, platform.top, null)
+            }
+
 
             // Draw the red outline around the platform (hitbox)
             val outlinePaint = Paint().apply {
@@ -165,9 +229,9 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
         }
 
         // Draw the stars
-        for (star in stars)
-        {
-            canvas.drawCircle(star.x, star.y, star.radius, starPaint)
+
+        for (star in stars) {
+            canvas.drawCircle(star.x, star.y, star.size, starPaint)
         }
 
         for (grapplePoint in grapplePoints) {
@@ -202,8 +266,22 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
             val distance = sqrt((dx * dx + dy * dy).toDouble())
 
             // Check if the player is close enough to the star to collect it
-            if (distance <= star.radius + player.size / 2) {
+            if (distance <= star.size + player.size / 2) {
                 iterator.remove()  // Remove the star when collected
+
+                // Notify the GameView or GameManager about the star collection
+                onStarCollected()
+
+                return true
+            }
+        }
+
+        // Check for collision with door (only if not already collided)
+        door?.let {
+            if (!doorCollided && RectF.intersects(it, player.getBoundingRect())) {
+                doorCollided = true  // Mark the door as collided
+                // Notify that level transition is needed
+                levelTransitionListener?.onLevelComplete()
                 return true
             }
         }
@@ -223,6 +301,17 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
     fun getGrapplePoints(): List<GrapplePoint>
     {
         return grapplePoints
+    }
+
+    // Callback for when a star is collected
+    private fun onStarCollected() {
+        // Trigger game-specific actions, e.g., update the score or play a sound
+        Log.d("GameLayer", "Star collected!")
+        // Update score or notify GameManager
+    }
+
+    private fun onLevelTransition() {
+        levelTransitionListener?.onLevelComplete()
     }
 
 }

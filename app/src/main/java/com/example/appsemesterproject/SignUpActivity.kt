@@ -39,10 +39,11 @@ class SignUpActivity : ComponentActivity() {
     fun SignUpScreen() {
         val email = remember { androidx.compose.runtime.mutableStateOf("") }
         val password = remember { androidx.compose.runtime.mutableStateOf("") }
+        val sourceActivity = intent.getStringExtra("sourceActivity") ?: "MainActivity" // Default to MainActivity if not provided
 
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Create Account", color = Color.Black, modifier = Modifier.padding(bottom = 24.dp))
+                Text("Sign Up", color = Color.Black, modifier = Modifier.padding(bottom = 24.dp))
 
                 TextField(
                     value = email.value,
@@ -61,22 +62,30 @@ class SignUpActivity : ComponentActivity() {
 
                 Button(
                     onClick = {
-                        createAccount(email.value, password.value)
+                        createAccount(email.value, password.value, sourceActivity)
                     },
                     modifier = Modifier.padding(top = 16.dp)
                 ) {
-                    Text("Create Account")
+                    Text("Sign Up")
                 }
             }
         }
     }
 
-    private fun createAccount(email: String, password: String) {
+    private fun createAccount(email: String, password: String, sourceActivity: String) {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     Toast.makeText(this, "Account Created Successfully", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this, LoginActivity::class.java))
+
+                    // Navigate to the appropriate source activity
+                    val intent = if (sourceActivity == "SettingsActivity") {
+                        Intent(this, SettingsActivity::class.java)
+                    } else {
+                        Intent(this, MainActivity::class.java)
+                    }
+
+                    startActivity(intent)
                     finish()
                 } else {
                     Toast.makeText(this, "Account Creation Failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()

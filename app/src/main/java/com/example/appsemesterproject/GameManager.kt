@@ -1,6 +1,7 @@
 package com.example.appsemesterproject
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.RectF
 import android.util.Log
@@ -27,30 +28,25 @@ private val platformChalkSketch = listOf(
 
 
 // GameManager handles level progression and theme setup
-class GameManager(private val context: Context, private val gameLayer: GameLayer) {
+class GameManager(private val context: Context, private val gameLayer: GameLayer, private val player: Player) : GameLayer.LevelTransitionListener {
 
     private val levels = listOf(
         // Act 1
-        Level(1, 1, "Chalk Sketch Valley", R.drawable.sketchvalleybg, R.drawable.platformb, R.drawable.platforma, platformChalkSketch),
-//        Level(1, 2, "Galactic Gold Mine", R.drawable.cave_bg, R.drawable.cave_platform, R.drawable.cave_ground),
-//        Level(1, 3, "Skyview City", R.drawable.waterfall_bg, R.drawable.waterfall_platform, R.drawable.waterfall_ground, R.drawable.act1_boss),
-
-        // Act 2
-//        Level(2, 1, "Light City", R.drawable.desert_bg, R.drawable.desert_platform, R.drawable.desert_ground),
-//        Level(2, 2, "The Lightning Factory", R.drawable.ruins_bg, R.drawable.ruins_platform, R.drawable.ruins_ground),
-//        Level(2, 3, "Crystal Cove", R.drawable.volcano_bg, R.drawable.volcano_platform, R.drawable.volcano_ground, R.drawable.act2_boss),
-
-        // Act 3
-//        Level(3, 1, "The Rosemarian Kingdom", R.drawable.sky_bg, R.drawable.sky_platform, R.drawable.sky_ground),
-//        Level(3, 2, "Campus Valley", R.drawable.space_bg, R.drawable.space_platform, R.drawable.space_ground),
-//        Level(3, 3, "Sunset City", R.drawable.fortress_bg, R.drawable.fortress_platform, R.drawable.fortress_ground, R.drawable.act3_boss)
+        Level(1, 1, "Chalk Sketch Valley", R.drawable.sketchvalleybg, R.drawable.platformdflat, R.drawable.platforma, platformChalkSketch),
+        // Add more levels if needed
     )
 
     private var currentLevelIndex = 0
+    private var hasPlayerCollidedWithDoor = false // Flag to prevent continuous collision
 
-    fun loadLevel() {
-        val level = levels[currentLevelIndex]
+    init {
+        // Set GameManager as the listener to GameLayer
+        gameLayer.setLevelTransitionListener(this)
+    }
 
+    fun loadLevel(levelIndex: Int) {
+        val level = levels[levelIndex]
+        currentLevelIndex = levelIndex
 
         // Load background, ground, and platforms
         val backgroundBitmap = BitmapFactory.decodeResource(context.resources, level.backgroundResId)
@@ -65,34 +61,53 @@ class GameManager(private val context: Context, private val gameLayer: GameLayer
         gameLayer.setPlatformImage(platformBitmap)
         gameLayer.setGroundImage(groundBitmap)
 
-        // Load the boss if the level has one
-//        level.bossResId?.let {
-//            val bossBitmap = BitmapFactory.decodeResource(context.resources, it)
-//            gameLayer.setBoss(bossBitmap)
-//        } ?: gameLayer.removeBoss()
-
-        // Apply level-specific mechanics
+        // Apply level-specific mechanics (if any)
         //applyThemeMechanics(level.theme)
     }
 
     fun nextLevel() {
         if (currentLevelIndex < levels.size - 1) {
             currentLevelIndex++
-            loadLevel()
+            loadLevel(currentLevelIndex)
         } else {
             // Game complete logic
             showGameCompleteScreen()
         }
     }
 
-//    private fun applyThemeMechanics(theme: String) {
-//        when (title) {
-//            //"Final Boss" -> gameLayer.enableFinalBossMechanics()
-//        }
-//    }
-
     private fun showGameCompleteScreen() {
-        // Display "Game Complete" UI or transition to the main menu
+        // Create an intent to navigate to the GameCompleteActivity
+        val intent = Intent(context, GameCompleteActivity::class.java)
+        context.startActivity(intent)
+
+        // Optionally, you can display a message or handle any other game completion tasks
         println("Congratulations! You've completed the game!")
+    }
+
+    // Handle player's collision with the door
+    fun checkCollisionWithDoor(door: RectF) {
+        if (hasPlayerCollidedWithDoor) {
+            return // Prevent further collision detection if player already collided
+        }
+
+        if (RectF.intersects(player.getBoundingRect(), door)) {
+            // Set flag to prevent future collisions
+            hasPlayerCollidedWithDoor = true
+            // Trigger the game complete screen or next level
+            showGameCompleteScreen()
+        }
+    }
+
+
+    // Implement the LevelTransitionListener method
+    override fun onLevelComplete() {
+        // Handle level transition logic here, for example:
+        Log.d("GameManager", "Level completed, transitioning to the next level!")
+        nextLevel()
+    }
+
+    // Reset collision flag when the game is reset or a new level is loaded
+    fun resetCollisionFlag() {
+        hasPlayerCollidedWithDoor = false
     }
 }

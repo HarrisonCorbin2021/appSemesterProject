@@ -25,7 +25,7 @@ class GameThread(
             try {
                 canvas = surfaceHolder.lockCanvas()
                 synchronized(surfaceHolder) {
-                    gameLayer.update(deltaTime, player)
+                    gameLayer.update(player.dx, player.x)
                     gameLayer.draw(canvas)
                 }
             } catch (e: Exception) {
@@ -45,4 +45,9 @@ class GameThread(
         }
     }
 
+    // Method to stop the game thread
+    fun stopThread() {
+        running = false
+        interrupt()  // Interrupt the thread if it's currently sleeping or waiting
+    }
 }
