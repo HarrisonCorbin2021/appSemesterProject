@@ -1,6 +1,5 @@
 package com.example.appsemesterproject
 
-import android.content.res.Resources
 import android.graphics.PointF
 import android.graphics.RectF
 import kotlin.math.sqrt
@@ -61,6 +60,15 @@ class Player(var x: Float, var y: Float) {
         grappling = true
         grappleTarget = target
         isInAir = true
+    }
+
+    fun isNear(grapplePoint: GameLayer.GrapplePoint, proximityThreshold: Float = 100f): Boolean {
+        val pointX = grapplePoint.x
+        val pointY = grapplePoint.y
+        val dx = pointX - x
+        val dy = pointY - y
+        val distance = sqrt(dx * dx + dy * dy)
+        return distance <= proximityThreshold
     }
 
     fun getBoundingRect(): RectF = RectF(x, y, x + size, y + size)

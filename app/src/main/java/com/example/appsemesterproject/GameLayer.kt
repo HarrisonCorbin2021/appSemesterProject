@@ -11,8 +11,10 @@ import kotlin.math.sqrt
 class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
 {
 
+    private val player = Player(100f, 300f)
+
     // Grapple-able objects or points
-    private val grapplePoints = mutableListOf<RectF>()
+    private val grapplePoints = mutableListOf<GrapplePoint>()
     private val grappleReticlePaint = Paint().apply {
         color = Color.BLACK
         style = Paint.Style.STROKE
@@ -20,7 +22,7 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
     }
 
     // The current grapple target
-    private var activeGrapple: RectF? = null
+    private var activeGrapple: GrapplePoint? = null
 
     // Load platform and ground images
     private var backgroundBitmap: Bitmap? = null
@@ -69,8 +71,8 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
         // Add more platforms as needed
 
         //Test grappling points
-        grapplePoints.add(RectF(400f, 800f, 450f, 850f))
-        grapplePoints.add(RectF(900f, 700f, 950f, 750f))
+        grapplePoints.add(GrapplePoint(400f, 1200f))
+        grapplePoints.add(GrapplePoint(900f, 800f))
 
         // Add stars centered above each platform
         platforms.forEach { platform ->
@@ -122,7 +124,12 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
             groundOffset = 0f
         }
         activeGrapple = grapplePoints.find { point ->
-            RectF.intersects(player.getBoundingRect(), point)}
+            val distanceX = point.x - (player.x + player.size / 2)
+            val distanceY = point.y - (player.y + player.size / 2)
+            val distance = sqrt(distanceX * distanceX + distanceY * distanceY)
+            distance <= (point.radius + player.size / 2) * 8 // Check if player is within grapple radius
+        }
+
     }
 
     fun draw(canvas: Canvas)
@@ -163,10 +170,12 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
             canvas.drawCircle(star.x, star.y, star.radius, starPaint)
         }
 
-        for(grapple in grapplePoints)
-        {
-            canvas.drawRect(grapple, grappleReticlePaint)
+        for (grapplePoint in grapplePoints) {
+            if (player.isNear(grapplePoint)) {
+                canvas.drawCircle(grapplePoint.x, grapplePoint.y, 50f, grappleReticlePaint)
+            }
         }
+
     }
 
     fun checkCollision(player: Player): Boolean
@@ -202,11 +211,18 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int)
         return false
     }
 
-
     // star data class
     data class Star(var x: Float, var y: Float, val radius: Float)
 
+    //grapplepoint data class
+    data class GrapplePoint(val x: Float, val y: Float, val radius: Float = 50f)
+
     //Returns what's being grappled
-    fun getActiveGrapple(): RectF? = activeGrapple
+    fun getActiveGrapple(): GrapplePoint? = activeGrapple
+
+    fun getGrapplePoints(): List<GrapplePoint>
+    {
+        return grapplePoints
+    }
 
 }

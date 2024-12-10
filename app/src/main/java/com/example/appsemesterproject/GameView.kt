@@ -162,6 +162,15 @@ class GameView(context: Context, private val gameLayer: GameLayer) : SurfaceView
         canvas.drawText("Right", rightButton.centerX(), rightButton.centerY() + 15f, textPaint)
         canvas.drawText("Jump", jumpButton.centerX(), jumpButton.centerY() + 15f, textPaint)
 
+        // Draw grappling points
+        val grapplePaint = Paint().apply {
+            color = Color.BLUE
+            style = Paint.Style.FILL
+        }
+        for (point in gameLayer.getGrapplePoints()) {
+            canvas.drawCircle(point.x, point.y, 20f, grapplePaint)
+        }
+
         // Draw the grappling hook line if active
         if (player.grappleTarget != null) {
             val grappleLinePaint = Paint().apply {
@@ -189,19 +198,26 @@ class GameView(context: Context, private val gameLayer: GameLayer) : SurfaceView
                 if (x < jumpButton.right && x > jumpButton.left && y < jumpButton.bottom && y > jumpButton.top) {
                     isJumping = !player.isInAir  // Set jumping to true if player is not in air
                 }
+
+                val touchRadius = 50f // Define a reasonable radius for touch detection
+                val activeGrapple = gameLayer.getActiveGrapple()
+                if (activeGrapple != null) {
+                    val distance = Math.sqrt(
+                        Math.pow((activeGrapple.x - x).toDouble(), 2.0) +
+                                Math.pow((activeGrapple.y - y).toDouble(), 2.0)
+                    ).toFloat()
+
+                    if (distance <= touchRadius) {
+                        // Set grapple target
+                        player.grappleTo(PointF(activeGrapple.x, activeGrapple.y))
+                    }
+                }
+
             }
             MotionEvent.ACTION_UP -> {
                 isMovingLeft = false
                 isMovingRight = false
                 isJumping = false
-            }
-            MotionEvent.ACTION_DOWN -> {
-                // Check for grapple point tap
-                val activeGrapple = gameLayer.getActiveGrapple()
-                if (activeGrapple != null && activeGrapple.contains(x, y)) {
-                    // Set grapple target
-                    player.grappleTo(PointF(activeGrapple.centerX(), activeGrapple.centerY()))
-                }
             }
         }
         return true
