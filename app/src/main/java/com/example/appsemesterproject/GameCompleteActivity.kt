@@ -49,7 +49,7 @@ class GameCompleteActivity : ComponentActivity() {
 
             // Display message for game completion
             Text(
-                text = "Congratulations! You've completed the game! Score: $score, Level: $level",
+                text = "Congratulations! You've completed the game!",
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 

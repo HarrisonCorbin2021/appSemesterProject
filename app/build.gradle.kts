@@ -3,6 +3,7 @@ import org.gradle.kotlin.dsl.android
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
 }
 
@@ -91,5 +92,9 @@ dependencies {
 
     // AppCompat
     implementation("androidx.appcompat:appcompat:1.6.1")
+
+    // Google Play services dependencies
+    implementation("com.google.android.gms:play-services-base:18.5.0")
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
 }
 

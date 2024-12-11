@@ -2,6 +2,7 @@ package com.example.appsemesterproject
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -26,15 +27,24 @@ import com.example.appsemesterproject.ui.theme.AppSemesterProjectTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 class SettingsActivity : ComponentActivity() {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 
+    private var playerLevel: Int = 1
+    private var playerPositionX: Float = 100f
+    private var playerPositionY: Float = 1400f
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Retrieve game data from Intent
+        val intent = intent
+        playerLevel = intent.getIntExtra("playerLevel", 1)  // Default to 1 if not passed
+        playerPositionX = intent.getFloatExtra("playerX", 100f)  // Default to 100f if not passed
+        playerPositionY = intent.getFloatExtra("playerY", 1400f)  // Default to 1400f if not passed
 
         setContent {
             AppSemesterProjectTheme {
@@ -68,8 +78,8 @@ class SettingsActivity : ComponentActivity() {
             )
 
             if (isLoggedIn) {
-                // Show Logout button when user is logged in
-                LogoutButton(context)
+                // Show Save Game, Logout, and Return to Menu buttons when user is logged in
+                LoggedInButtons(context)
             } else {
                 // Show Login and Sign Up buttons if user is not logged in
                 LoginSignUpButtons(context)
@@ -105,7 +115,19 @@ class SettingsActivity : ComponentActivity() {
     }
 
     @Composable
-    fun LogoutButton(context: android.content.Context) {
+    fun LoggedInButtons(context: android.content.Context) {
+        // Save Game button
+        Button(
+            onClick = {
+                // Save game data to Firebase Firestore
+                saveGameData(context)
+            },
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            Text("Save Game")
+        }
+
+        // Logout button
         Button(
             onClick = {
                 // Debounce the button clicks to avoid rapid successive clicks
@@ -120,6 +142,77 @@ class SettingsActivity : ComponentActivity() {
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
             Text("Logout")
+        }
+
+        // Return to Menu button
+        Button(
+            onClick = {
+                // Navigate to the main menu (or main activity)
+                val intent = Intent(context, MainActivity::class.java)
+                context.startActivity(intent)
+                (context as? SettingsActivity)?.finish() // Close the settings activity
+            },
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            Text("Return to Menu")
+        }
+    }
+
+    // Function to save game data to Firebase Firestore
+    private fun saveGameData(context: android.content.Context) {
+        Log.d("SettingsActivity", "SettingsActivity: Attempting save...")
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            // Use the player data passed from GameView
+            val gameData = mapOf(
+                "level" to playerLevel,
+                "playerX" to playerPositionX,
+                "playerY" to playerPositionY
+            )
+
+            val userGameRef = db.collection("users").document(currentUser.uid).collection("games")
+                .document("current_game")
+
+            // Check if the game data already exists
+            userGameRef.get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        // If the document exists, update it
+                        userGameRef.update(gameData)
+                            .addOnSuccessListener {
+                                Toast.makeText(context, "Game Updated", Toast.LENGTH_SHORT).show()
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(
+                                    context,
+                                    "Error updating game: ${e.message}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                    } else {
+                        // If the document does not exist, create it
+                        userGameRef.set(gameData)
+                            .addOnSuccessListener {
+                                Toast.makeText(context, "Game Saved", Toast.LENGTH_SHORT).show()
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(
+                                    context,
+                                    "Error saving game: ${e.message}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(
+                        context,
+                        "Error checking game data: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+        } else {
+            Toast.makeText(context, "User not logged in", Toast.LENGTH_SHORT).show()
         }
     }
 }

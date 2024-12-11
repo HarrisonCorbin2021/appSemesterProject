@@ -1,6 +1,7 @@
 package com.example.appsemesterproject
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.Resources
 import android.graphics.*
 import android.util.Log
@@ -8,12 +9,13 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class GameView(context: Context, private val gameLayer: GameLayer, private val player: Player) : SurfaceView(context), SurfaceHolder.Callback, Runnable {
 
     var isRunning = false
     private lateinit var thread: Thread
-
 
     private val displayMetrics = Resources.getSystem().displayMetrics
     private val screenWidth = displayMetrics.widthPixels
@@ -30,6 +32,10 @@ class GameView(context: Context, private val gameLayer: GameLayer, private val p
     private val leftButton = RectF(50f, screenHeight - buttonSize - 50f, 50f + buttonSize, screenHeight - 50f)
     private val rightButton = RectF(leftButton.right + 50f, leftButton.top, leftButton.right + 50f + buttonSize, leftButton.bottom)
     private val jumpButton = RectF(screenWidth - buttonSize - 50f, screenHeight - buttonSize - 50f, screenWidth - 50f, screenHeight - 50f)
+
+    // Gear button (settings button)
+    private val settingsButton = RectF(50f, 50f, 50f + 75f, 50f + 75f) // Top left corner
+    private val gearIcon = BitmapFactory.decodeResource(context.resources, R.drawable.gear) // Gear icon
 
     init {
         Log.d("GameView", "GameView: GameView Initializing")
@@ -85,12 +91,9 @@ class GameView(context: Context, private val gameLayer: GameLayer, private val p
         }
     }
 
-
     private fun update() {
-        //Log.d("GameView", "GameView: update called")
         // Update player, background, and game layer
         player.update(isMovingLeft, isMovingRight, isJumping)
-        //Log.d("GameView", "GameView: Player position: x=${player.x}, y=${player.y}")
 
         // Prevent player from moving off the screen horizontally
         if (player.x < 0) {
@@ -126,7 +129,6 @@ class GameView(context: Context, private val gameLayer: GameLayer, private val p
     }
 
     private fun drawGame(canvas: Canvas) {
-        //Log.d("GameView", "GameView: drawGame called")
         canvas.drawBitmap(BitmapFactory.decodeResource(context.resources, R.drawable.sketchvalleybg), 0f, 0f, null)
 
         // Draw the background
@@ -191,6 +193,9 @@ class GameView(context: Context, private val gameLayer: GameLayer, private val p
                 grappleLinePaint
             )
         }
+
+        // Draw the settings button (gear icon)
+        canvas.drawBitmap(gearIcon, null, settingsButton, null)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -205,12 +210,17 @@ class GameView(context: Context, private val gameLayer: GameLayer, private val p
                     isJumping = !player.isInAir  // Set jumping to true if player is not in air
                 }
 
+                // Check if the settings button (gear) was clicked
+                if (x < settingsButton.right && x > settingsButton.left && y < settingsButton.bottom && y > settingsButton.top) {
+                    navigateToSettings()
+                }
+
                 val touchRadius = 50f // Define a reasonable radius for touch detection
                 val activeGrapple = gameLayer.getActiveGrapple()
                 if (activeGrapple != null) {
-                    val distance = Math.sqrt(
-                        Math.pow((activeGrapple.x - x).toDouble(), 2.0) +
-                                Math.pow((activeGrapple.y - y).toDouble(), 2.0)
+                    val distance = sqrt(
+                        (activeGrapple.x - x).toDouble().pow(2.0) +
+                                (activeGrapple.y - y).toDouble().pow(2.0)
                     ).toFloat()
 
                     if (distance <= touchRadius) {
@@ -227,6 +237,23 @@ class GameView(context: Context, private val gameLayer: GameLayer, private val p
             }
         }
         return true
+    }
+
+    // Function to navigate to SettingsActivity with the game data
+    private fun navigateToSettings() {
+        val intent = Intent(context, SettingsActivity::class.java)
+
+        // Pass the player data (level and position) to SettingsActivity
+        val playerLevel = 1  // Replace with actual player level
+        val playerPositionX = player.x  // Player X position
+        val playerPositionY = player.y  // Player Y position
+
+        // Pass data via intent
+        intent.putExtra("playerLevel", playerLevel)
+        intent.putExtra("playerX", playerPositionX)
+        intent.putExtra("playerY", playerPositionY)
+
+        context.startActivity(intent)
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
