@@ -37,7 +37,7 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int, pri
 
     // Stars for scoring
     private val stars = mutableListOf<Star>()
-    private val starRadius = 10f
+    private val starRadius = 15f
     private val starPaint = Paint().apply { color = Color.YELLOW }
 
     // Level boundary
@@ -198,13 +198,6 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int, pri
                 canvas.drawBitmap(scaledBitmap, platform.left, platform.top, null)
             }
 
-            // Draw the red outline around the platform (hitbox)
-            val outlinePaint = Paint().apply {
-                color = Color.RED
-                strokeWidth = 5f
-                style = Paint.Style.STROKE
-            }
-            canvas.drawRect(platform, outlinePaint)
         }
 
         // Draw the stars

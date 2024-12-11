@@ -147,14 +147,6 @@ class GameView(context: Context, private val gameLayer: GameLayer, private val p
             paint
         )
 
-        // Draw the red line at the ground height
-        val groundLinePaint = Paint().apply {
-            color = Color.RED
-            strokeWidth = 5f  // Line thickness
-            style = Paint.Style.STROKE
-        }
-        canvas.drawLine(0f, screenHeight - gameLayer.groundHeight.toFloat(), screenWidth.toFloat(), screenHeight - gameLayer.groundHeight.toFloat(), groundLinePaint)
-
         // Draw the control buttons
         canvas.drawRoundRect(leftButton, 20f, 20f, buttonPaint)
         canvas.drawRoundRect(rightButton, 20f, 20f, buttonPaint)
