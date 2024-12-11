@@ -1,4 +1,3 @@
-Thank you for providing the detailed code for `MainActivity.kt`. Now, I will include the necessary files with all variables, methods, and the necessary structure, ensuring consistency throughout the tutorial. Here’s the revised and complete tutorial with full code for each file you mentioned, including the correct variables and methods:
 
 ---
 
