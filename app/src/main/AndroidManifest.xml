@@ -1,6 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permissions required for Google Play Services and Firebase -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -12,17 +15,37 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppSemesterProject"
         tools:targetApi="31">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.AppSemesterProject">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".GameCompleteActivity"
+            android:label="GameComplete"
+            android:exported="true" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:label="Settings"
+            android:exported="true" />
+
+        <activity
+            android:name=".LoginActivity"
+            android:label="Login"
+            android:exported="true" />
+
+        <activity
+            android:name=".SignUpActivity"
+            android:label="SignUp"
+            android:exported="true" />
+
     </application>
 
 </manifest>
