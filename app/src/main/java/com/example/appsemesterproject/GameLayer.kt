@@ -11,7 +11,7 @@ import kotlin.math.sqrt
 
 class GameLayer(private val screenWidth: Int, private val screenHeight: Int, private val player: Player) {
 
-    private val player = Player(100f, 300f)
+    //private val player = Player(100f, 300f)
 
     // Grapple-able objects or points
     private val grapplePoints = mutableListOf<GrapplePoint>()
@@ -172,7 +172,7 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int, pri
 
 
     fun draw(canvas: Canvas)
-
+    {
         // Draw background first
         backgroundBitmap?.let { canvas.drawBitmap(it, 0f, 0f, null) }
 
@@ -231,7 +231,7 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int, pri
         // Draw the stars
 
         for (star in stars) {
-            canvas.drawCircle(star.x, star.y, star.size, starPaint)
+            canvas.drawCircle(star.x, star.y, star.radius, starPaint)
         }
 
         for (grapplePoint in grapplePoints) {
@@ -266,7 +266,7 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int, pri
             val distance = sqrt((dx * dx + dy * dy).toDouble())
 
             // Check if the player is close enough to the star to collect it
-            if (distance <= star.size + player.size / 2) {
+            if (distance <= star.radius + player.size / 2) {
                 iterator.remove()  // Remove the star when collected
 
                 // Notify the GameView or GameManager about the star collection
