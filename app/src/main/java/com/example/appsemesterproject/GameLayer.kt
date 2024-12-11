@@ -84,7 +84,8 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int, pri
 
         //Test grappling points
         grapplePoints.add(GrapplePoint(400f, 1200f))
-        grapplePoints.add(GrapplePoint(900f, 800f))
+        grapplePoints.add(GrapplePoint(650f, 1000f))
+        grapplePoints.add(GrapplePoint(900f, 1000f))
 
         // Add stars centered above each platform
         platforms.forEach { platform ->
@@ -100,25 +101,20 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int, pri
     fun update(playerSpeed: Float, playerX: Float) {
 
         // Scroll platforms with the background
-        for (platform in platforms)
-        {
+        for (platform in platforms) {
             platform.offset(-playerSpeed, 0f)
         }
 
         // Scroll stars with the background
-        for (star in stars)
-        {
+        for (star in stars) {
             star.x -= playerSpeed
         }
 
         // Check and reset platforms when they move off the left or right side of the screen
-        for (platform in platforms)
-        {
-            if (platform.right < 0)
-            {
+        for (platform in platforms) {
+            if (platform.right < 0) {
                 platform.offset(screenWidth + platform.width(), 0f)
-            } else if (platform.left > screenWidth)
-            {
+            } else if (platform.left > screenWidth) {
                 platform.offset(-screenWidth - platform.width(), 0f)
             }
         }
@@ -147,13 +143,20 @@ class GameLayer(private val screenWidth: Int, private val screenHeight: Int, pri
             )
         }
 
-        activeGrapple = grapplePoints.find { point ->
+        // Find the closest grapple point within range
+        activeGrapple = grapplePoints.minByOrNull { point ->
             val distanceX = point.x - (player.x + player.size / 2)
             val distanceY = point.y - (player.y + player.size / 2)
             val distance = sqrt(distanceX * distanceX + distanceY * distanceY)
-            distance <= (point.radius + player.size / 2) * 8
+            distance // return the distance for comparison
+        }?.takeIf { point ->
+            val distanceX = point.x - (player.x + player.size / 2)
+            val distanceY = point.y - (player.y + player.size / 2)
+            val distance = sqrt(distanceX * distanceX + distanceY * distanceY)
+            distance <= (point.radius + player.size / 2) * 8 // check if within range
         }
     }
+
 
     fun draw(canvas: Canvas) {
 
